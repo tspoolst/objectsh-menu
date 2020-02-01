@@ -1,0 +1,465 @@
+#!/bin/ksh
+
+#[of]:menu
+#[of]:static methods
+#[of]:function menu.staticconstructor {
+function menu.staticconstructor {
+#[of]:  function menu.drawhborder {
+function menu.drawhborder {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset j
+    ${c}.setcursorxy ${d}1 ${d}2
+    for ((j=0;j<${ov}width;j++)) ; do
+      echo -n '*'
+    done
+
+    return 0
+  "
+}
+#[cf]
+#[of]:  function menu.settitle {
+function menu.settitle {
+#[c]object
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    ${ov}title=${q}${d}1${q}
+    return 0
+  "
+}
+#[cf]
+#[of]:  function menu.additem {
+function menu.additem {
+#[c]object
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+
+    typeset _type _hotkey _name _prog
+    _type=${q}${d}1${q}
+    _hotkey=${q}${d}2${q}
+    _name=${q}${d}3${q}
+    _prog=${q}${d}4${q}
+
+    new menuitem ${ov}item${d}{${ov}totalitems}
+    ${ov}item${d}{${ov}totalitems}.settype ${q}${d}{_type}${q}
+    ${ov}item${d}{${ov}totalitems}.sethotkey ${q}${d}{_hotkey}${q}
+    [[ -n ${q}${d}{_hotkey}${q} ]] && \
+      ${ov}hotkeys.setkey ${q}${d}{_hotkey}${q} ${d}{${ov}totalitems}
+    ${ov}item${d}{${ov}totalitems}.setname ${q}${d}{_name}${q}
+    ${ov}item${d}{${ov}totalitems}.setprog ${q}${d}{_prog}${q}
+    
+    ((++${ov}totalitems))
+  
+    return 0
+  "
+}
+#[cf]
+#[of]:  function menu.incselecteditem {
+function menu.incselecteditem {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset ${mv}nextitem
+    ${mv}nextitem=${d}((${ov}selecteditem+1))
+#[c]    set -xv
+    if ((${mv}nextitem==${ov}totalitems)) ; then
+      ${ov}selecteditem=0
+    else
+      while ((${mv}nextitem<${ov}totalitems)) ; do
+        ${ov}item${d}((${mv}nextitem)).isselectable && {
+          ${ov}selecteditem=${d}{${mv}nextitem}
+          break
+        }
+        ((++${mv}nextitem))
+      done
+    fi
+#[c]    set +xv
+#[c]    read -s -n 1 -r _key_tmp
+
+    ${o}.refresh
+    return 0
+  "
+}
+#[c]if next item is > totalitems then selecteditem=0
+#[cf]
+#[of]:  function menu.decselecteditem {
+function menu.decselecteditem {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset ${mv}previtem
+    ${mv}previtem=${d}{${ov}selecteditem}
+
+    if ((${mv}previtem==0)) ; then
+      ${ov}selecteditem=${d}((${ov}totalitems-1))
+    else
+      while ((${mv}previtem>0)) ; do
+        ${ov}item${d}((${mv}previtem-1)).isselectable && {
+          ${ov}selecteditem=${d}((${mv}previtem-1))
+          break
+        }
+        ((--${mv}previtem))
+      done
+    fi
+
+
+    ${o}.refresh
+    return 0
+  "
+}
+#[cf]
+#[of]:  function menu.open {
+function menu.open {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset i
+    typeset ${mv}name ${mv}prog
+    ${ov}enter=1
+    ${ov}selecteditem=0
+
+#[of]:    check if submenu
+    [[ ${q}${d}{FUNCNAME[2]}${q} = ${q}menu.open${q} ]] && ${ov}submenu=1 || ${ov}submenu=0
+#[cf]
+#[of]:    calc top/left/width
+    ${ov}width=12
+    [[ ${d}{#${ov}title} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${ov}title}
+    for ((i=0;i<${d}{${ov}totalitems};i++)) ; do
+      ${ov}item${d}{i}.getname ${mv}name
+      [[ ${d}{#${mv}name} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${mv}name}
+    done
+    ((${ov}width+=9))
+    ${ov}left=${d}((${cv}width/2-${ov}width/2))
+    ${ov}top=${d}((${cv}height/2-(${ov}totalitems+4)/2))
+#[cf]
+#[c]    trap ${q}echo TRAPed signal;sleep 2;${d}{gl_progname}${q} INT
+#[c]    HUP INT QUIT KILL TERM
+    ${o}.refresh
+#[of]:    key process loop
+    while read -s -n 1 -r _key ; do
+      case ${q}${d}{_key}${q} in
+#[of]:        escaped keys
+        ${d}'\E')
+          read -s -n 2 -r -t 1 _key || {
+#[of]:            esc
+#[c]            esc itself is just a single char
+#[c]            if read timeout is reached the key must be esc
+            break
+#[cf]
+          }
+          case ${q}${d}{_key}${q} in
+#[of]:            up)
+            '[A')
+              ${o}.decselecteditem
+              ;;
+#[cf]
+#[of]:            down)
+            '[B')
+              ${o}.incselecteditem
+              ;;
+#[cf]
+#[of]:            left)
+            '[D')
+              ${ov}enter=1
+              ${o}.refresh
+              ;;
+#[cf]
+#[of]:            right)
+            '[C')
+              ${ov}enter=0
+              ${o}.refresh
+              ;;
+#[cf]
+#[of]:            *)
+            *)
+              echo ${q}ascii ---${d}{_key}---${q}
+              ;;
+#[cf]
+          esac
+          ;;
+#[cf]
+#[of]:        q)
+        q)
+          break
+          ;;
+#[cf]
+#[of]:        enter)
+        '')
+          ((${ov}enter)) && {
+            ${ov}item${d}((${ov}selecteditem)).getprog ${mv}prog
+            [[ -n ${q}${d}{${mv}prog}${q} ]] && eval ${q}${d}{${mv}prog}${q}
+            ${ov}enter=1
+            ${o}.refresh
+          } || break
+          ;;
+#[cf]
+#[of]:        *)
+        *)
+          if ${ov}hotkeys.getkey _item ${q}${d}{_key}${q} ; then
+            ${ov}selecteditem=${d}{_item}
+            ${ov}item${d}((${ov}selecteditem)).getprog ${mv}prog
+#[c]            set -xv
+            if [[ -n ${q}${d}{${mv}prog}${q} ]] ; then
+              trap ${q}echo TRAPed signal${q} INT
+              (eval ${q}${d}{${mv}prog}${q})
+              trap - INT
+            fi
+#[c]            set +xv
+#[c]            read -s -n 1 -r _key_tmp
+#[c]            sleep 3
+            ${ov}enter=1
+            ${o}.refresh
+          else
+            echo ${q}single ascii ---${d}{_key}---${q}
+          fi 
+          ;;
+#[cf]
+      esac
+    done
+#[cf]
+
+    echo
+    return 0
+  "
+}
+#[c]SET_COL="echo -en \\033[${gl_colstatus}G"
+#[c]SET_WCOL="echo -en \\033[${WCOL}G"
+#[c]CURS_UP="echo -en \\033[A"
+#[c]gl_gray="echo -en \\033[0;39m"
+#[c]gl_green="echo -en \\033[1;32m"
+#[c]gl_yellow="echo -en \\033[1;33m"
+#[c]gl_red="echo -en \\033[1;31m"
+#[cf]
+#[of]:  function menu.refresh {
+function menu.refresh {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset i j _vpositon _exitmsg
+    typeset ${mv}type ${mv}hotkey ${mv}name ${mv}prog
+
+    clear
+
+    _vpositon=${d}{${ov}top}
+    ${o}.drawhborder ${d}{${ov}left} ${d}((_vpositon++))
+#[of]:    draw title
+    ${c}.setcursorxy ${d}{${ov}left} ${d}((_vpositon))
+    echo -n '*'
+
+    ${c}.setcursorxy ${d}((${ov}left+(${ov}width/2)-${d}{#${ov}title}/2)) ${d}((_vpositon))
+
+    echo -n ${q}${d}{${ov}title}${q}
+    ${c}.setcursorxy ${d}((${ov}left+${ov}width-1)) ${d}((_vpositon++))
+    echo -n '*'
+#[cf]
+    ${o}.drawhborder ${d}((${ov}left)) ${d}((_vpositon++))
+#[of]:    draw items
+    for ((i=0;i<${ov}totalitems;i++)) ; do
+      ${c}.setcursorxy ${d}((${ov}left)) ${d}((_vpositon+i))
+#[c]      echo -n ${q}${d}{i}${d}{${ov}totalitems}${q}
+
+      ${ov}item${d}{i}.gettype ${mv}type
+#[c]      echo -en ${q}${d}{${mv}type}${q}
+
+      echo -n '*'
+      ((i==${ov}selecteditem)) && echo -en ${q}\\033[7m${q}
+      case ${d}{${mv}type} in
+#[of]:        spacer)
+        spacer)
+          for ((j=0;j<${ov}width-2;j++)) ; do
+            echo -en '-'
+          done
+          ;;
+#[cf]
+#[of]:        action|*)
+        action|*)
+          ${ov}item${d}{i}.gethotkey ${mv}hotkey
+          ${ov}item${d}{i}.getname ${mv}name
+          while ((${d}{#${mv}name}<${ov}width-7)) ; do
+            ${mv}name=${q}${d}{${mv}name} ${q}
+          done
+          echo -n ${q}  ${d}{${mv}hotkey}. ${d}{${mv}name}${q}
+          ;;
+#[cf]
+      esac
+      ((i==${ov}selecteditem)) && echo -en ${q}\\033[0m${q}
+      echo -n '*'
+    done
+    ((_vpositon+=i))
+#[cf]
+    ${o}.drawhborder ${d}{${ov}left} ${d}((_vpositon++))
+#[of]:    draw enter/exit toggle
+    ((${ov}submenu)) && _exitmsg=back || _exitmsg=done
+
+    ${c}.setcursorxy ${d}{${ov}left} ${d}((_vpositon))
+    echo -n '*'
+    ${c}.setcursorxy ${d}((${ov}left+(${ov}width/2)-6)) ${d}((_vpositon))
+      ((${ov}enter)) && {
+        echo -en ${q}\\033[7mselect\\033[0m   ${d}{_exitmsg}${q}
+      } || {
+        echo -en ${q}select   \\033[7m${d}{_exitmsg}\\033[0m${q}
+      }
+    ${c}.setcursorxy ${d}((${ov}left+${ov}width-1)) ${d}((_vpositon++))
+    echo -n '*'
+
+#[cf]
+    ${o}.drawhborder ${d}{${ov}left} ${d}((_vpositon++))
+    return 0
+  "
+}
+#[c]    map top left of menu to screen
+#[c]      screenheight/2-height/2
+#[c]      screenwidth/2-width/2
+#[c]      position cursor
+#[c]    draw menu
+#[c]      top border
+#[c]      border,space,active,space,hotkey,.,space,name,space,border
+#[c]      bottom border
+#[c]spacer/toggle/action/menu
+#[cf]
+}
+#[cf]
+#[cf]
+#[of]:class methods
+#[of]:function menu.classconstructor {
+function menu.classconstructor {
+#[c]object
+#[of]:  includes
+  include hash
+#[cf]
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.calcscreensize {
+function ${c}.calcscreensize {
+  set -- ${d}(stty size 2>/dev/null)
+  ${cv}height=${d}1
+  ${cv}width=${d}2
+  [[ -z ${q}${d}{${cv}height}${q} ]] && {
+    ${cv}height=24
+    ${cv}width=80
+  }
+#[c]  echo ${d}{${cv}height} ${d}{${cv}width}
+#[c]  read -n 1
+  return 0
+}
+#[cf]
+#[of]:    function ${c}.setcursorxy {
+function ${c}.setcursorxy {
+  typeset _x _y
+  _x=${d}1
+  _y=${d}2
+  echo -en ${q}\\\\033[${d}{_y};${d}{_x}H${q}
+  return 0
+}
+#[cf]
+#[of]:    class data
+newvar ${cv}height ${cv}width
+${c}.calcscreensize
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[of]:dynamic methods
+#[of]:function menu.constructor {
+function menu.constructor {
+#[c]object
+#[of]:set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  #echo constructing object ${o} of class ${c}
+  eval "
+#[of]:    object data
+newvar ${ov}submenu ${ov}title ${ov}totalitems ${ov}selecteditem ${ov}enter
+newvar ${ov}top ${ov}left ${ov}width
+${ov}title=${q}empty title${q}
+${ov}totalitems=0
+
+new hash ${ov}hotkeys
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[cf]
+#[of]:menuitem
+#[of]:dynamic methods
+#[of]:function menuitem.constructor {
+function menuitem.constructor {
+#[c]object
+#[of]:set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  #echo constructing object ${o} of class ${c}
+  typeset i
+  for i in type hotkey name prog ; do
+    eval "
+      newvar ${ov}${i}
+      function ${o}.set${i} {
+        ${ov}${i}=${q}${d}1${q}
+      }
+      function ${o}.get${i} {
+        eval ${d}1=\\${q}\${d}{${ov}${i}}\\${q}
+      }
+    "
+  done
+  eval "
+#[of]:    function ${o}.isselectable {
+function ${o}.isselectable {
+  [[ -n ${q}${d}{${ov}hotkey}${q} ]]
+}
+#[cf]
+#[of]:    object data
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[cf]
+
+
+#[c]hotkey=a-zA-Z0-9
+#[c]type=spacer/toggle/action/menu
+#[c]name=
+#[c]prog=
+#[c]
+#[c]main.dir /basepathformenu/
+#[c]  the base gets  "ok     exit" all others get "ok    back" unless they are the new base
+#[c]title=
+#[c]spacer
+#[c]name=prog to run with options from menuprog/does not have to exist in path
+#[c]name "no options given/or run prog if present in current path"
+#[c]dname must exist and must contain a menu.conf file
+#[c]name
+#[c]main.size
+#[c]main.position
+#[c]main.open
+#[c]main.close
+#[c]main.type simple/dirpath

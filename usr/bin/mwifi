@@ -1,0 +1,49 @@
+#!/bin/bash
+#[of]:includes
+#[l]:classdeff.bsh:/usr/lib/objectsh-1/classdeff.bsh
+gl_objectshbase=/usr/lib/objectsh-1
+. ${gl_objectshbase}/classdeff.bsh
+
+#[l]:menu.sclass:/usr/lib/objectsh-1/sclass/menu.sclass
+include menu
+#include /usr/lib/objectsh-1.0/sclass/menu
+#[cf]
+#[of]:main
+function ewifi {
+  clear
+  echo ewifi
+  read -n 1
+}
+function dwifi {
+  clear
+  echo dwifi
+  read -n 1
+}
+
+
+new menu main
+main.settitle "wifi manager"
+main.additem command "e" "enable wifi" 'ewifi'
+main.additem spacer
+main.additem spacer
+main.additem command "d" "disable wifi" 'dwifi'
+
+main.open
+exit
+
+
+#[c]main.dir /basepathformenu/
+#[c]  the base gets  "ok     exit" all others get "ok    back" unless they are the new base
+#[c]spacer
+#[c]name=prog to run with options from menuprog/does not have to exist in path
+#[c]name "no options given/or run prog if present in current path"
+#[c]dname must exist and must contain a menu.conf file
+#[c]name
+#[c]main.size
+#[c]main.position
+#[c]main.open
+#[c]main.close
+#[c]main.type simple/dirpath
+#[c]new menu fred
+#[c]
+#[cf]

@@ -1,0 +1,63 @@
+#!/bin/bash
+#[of]:functions
+#[cf]
+#[of]:includes
+#[l]:classdeff.bsh:/usr/lib/objectsh-1/classdeff.bsh
+gl_objectshbase=/usr/lib/objectsh-1
+. ${gl_objectshbase}/classdeff.bsh
+
+#[l]:menu.sclass:/usr/lib/objectsh-1/sclass/menu.sclass
+include menu
+#include /usr/lib/objectsh-1.0/sclass/menu
+#[cf]
+#[of]:main
+new menu main
+main.settitle main
+main.additem command "a" "do this" 'clear;stty size;read -n 1'
+main.additem spacer
+main.additem command "1" "do that" 'echo 2'
+main.additem command "2" "other option" 'clear;ls -l ~;read -n 1'
+main.additem command "3" "another" 'echo yes2'
+main.additem command "4" "a long line for the menu tttt gggg" 'echo yes3'
+main.additem command "5" "another" 'echo yes4'
+main.additem command "6" "sub1" 'sub1.open'
+new menu sub1
+sub1.settitle sub1
+sub1.additem command "a" "do this" 'echo 1'
+sub1.additem spacer
+sub1.additem command "1" "do that" 'echo 2'
+sub1.additem command "2" "other option" 'clear;ls -l ~;read -n 1'
+sub1.additem command "3" "another" 'echo yes2'
+sub1.additem command "4" "a long line for the menu tttt gggg cccc" 'echo yes3'
+sub1.additem command "5" "another" 'echo yes4'
+sub1.additem command "6" "sub2" 'sub2.open'
+new menu sub2
+sub2.settitle sub2
+sub2.additem command "a" "do this" 'echo 1'
+sub2.additem spacer
+sub2.additem command "1" "do that" 'echo 2'
+sub2.additem command "2" "other option" 'clear;ls -l ~;read -n 1'
+sub2.additem command "3" "another" 'echo yes2'
+sub2.additem command "4" "a long line for the menu tttt gggg" 'echo yes3'
+sub2.additem command "5" "another" 'echo yes4'
+sub2.additem command "6" "sub1" 'sub1.open'
+
+main.open
+exit
+
+
+#[c]main.dir /basepathformenu/
+#[c]  the base gets  "ok     exit" all others get "ok    back" unless they are the new base
+#[c]spacer
+#[c]name=prog to run with options from menuprog/does not have to exist in path
+#[c]name "no options given/or run prog if present in current path"
+#[c]dname must exist and must contain a menu.conf file
+#[c]name
+#[c]main.size
+#[c]main.position
+#[c]main.open
+#[c]main.close
+#[c]main.type simple/dirpath
+#[c]new menu fred
+#[c]
+#[cf]
