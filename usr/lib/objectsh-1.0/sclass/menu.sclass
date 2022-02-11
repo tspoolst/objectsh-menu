@@ -339,6 +339,57 @@ function menu.refresh {
 #[c]      bottom border
 #[c]spacer/toggle/action/menu
 #[cf]
+#[of]:  function menu.run_item_by_name {
+function menu.run_item_by_name {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset _name
+    _name=${q}${d}1${q}
+
+    typeset i j  _exitmsg
+    typeset ${mv}name ${mv}prog
+
+    for ((i=0;i<${ov}totalitems;i++)) ; do
+      ${ov}item${d}{i}.getname ${mv}name
+      if [[ ${q}${d}{${mv}name}${q} == ${q}${d}{_name}${q} ]] ; then
+        ${ov}item${d}{i}.getprog ${mv}prog
+        [[ -n ${q}${d}{${mv}prog}${q} ]] && eval ${q}${d}{${mv}prog}${q}
+        break
+      fi
+    done
+
+    return 0
+  "
+}
+#[cf]
+#[of]:  function menu.list_runnable_items_by_name {
+function menu.list_runnable_items_by_name {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset _name
+    _name=${q}${d}1${q}
+
+    typeset i j  _exitmsg
+    typeset ${mv}name ${mv}prog
+
+    for ((i=0;i<${ov}totalitems;i++)) ; do
+      ${ov}item${d}{i}.getname ${mv}name
+      ${ov}item${d}{i}.getprog ${mv}prog
+      [[ -n ${q}${d}{${mv}prog}${q} ]] && echo ${q}${d}${mv}name${q}
+    done
+
+    return 0
+  "
+}
+#[cf]
 }
 #[cf]
 #[cf]
