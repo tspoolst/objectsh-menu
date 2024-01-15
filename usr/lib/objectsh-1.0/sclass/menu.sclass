@@ -101,18 +101,18 @@ function menu.incselecteditem {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset ${mv}nextitem
-    ${mv}nextitem=${d}((${ov}selecteditem+1))
+    typeset ${omv}nextitem
+    ${omv}nextitem=${d}((${ov}selecteditem+1))
 
-    if ((${mv}nextitem==${ov}totalitems)) ; then
+    if ((${omv}nextitem==${ov}totalitems)) ; then
       ${ov}selecteditem=0
     else
-      while ((${mv}nextitem<${ov}totalitems)) ; do
-        ${ov}item${d}((${mv}nextitem)).isselectable && {
-          ${ov}selecteditem=${d}{${mv}nextitem}
+      while ((${omv}nextitem<${ov}totalitems)) ; do
+        ${ov}item${d}((${omv}nextitem)).isselectable && {
+          ${ov}selecteditem=${d}{${omv}nextitem}
           break
         }
-        ((++${mv}nextitem))
+        ((++${omv}nextitem))
       done
     fi
 
@@ -129,18 +129,18 @@ function menu.decselecteditem {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset ${mv}previtem
-    ${mv}previtem=${d}{${ov}selecteditem}
+    typeset ${omv}previtem
+    ${omv}previtem=${d}{${ov}selecteditem}
 
-    if ((${mv}previtem==0)) ; then
+    if ((${omv}previtem==0)) ; then
       ${ov}selecteditem=${d}((${ov}totalitems-1))
     else
-      while ((${mv}previtem>0)) ; do
-        ${ov}item${d}((${mv}previtem-1)).isselectable && {
-          ${ov}selecteditem=${d}((${mv}previtem-1))
+      while ((${omv}previtem>0)) ; do
+        ${ov}item${d}((${omv}previtem-1)).isselectable && {
+          ${ov}selecteditem=${d}((${omv}previtem-1))
           break
         }
-        ((--${mv}previtem))
+        ((--${omv}previtem))
       done
     fi
 
@@ -157,8 +157,8 @@ function menu.open {
 #[cf]
   eval "
     typeset i _key _mouse _mouseEvent _selecteditem
-    typeset ${mv}name
-#[c]    typeset ${mv}prog
+    typeset ${omv}name
+#[c]    typeset ${omv}prog
     ${ov}enter=1
     ${ov}selecteditem=0
 
@@ -173,8 +173,8 @@ function menu.open {
 #[c]    ${ov}width=12
 #[c]    [[ ${d}{#${ov}title} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${ov}title}
 #[c]    for ((i=0;i<${d}{${ov}totalitems};i++)) ; do
-#[c]      ${ov}item${d}{i}.getname ${mv}name
-#[c]      [[ ${d}{#${mv}name} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${mv}name}
+#[c]      ${ov}item${d}{i}.getname ${omv}name
+#[c]      [[ ${d}{#${omv}name} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${omv}name}
 #[c]    done
 #[c]    ((${ov}width+=9))
 #[c]    ${ov}left=${d}((${cv}width/2-${ov}width/2))
@@ -186,30 +186,29 @@ function menu.open {
     ${c}.calcscreensize
     ${o}.refresh
 #[of]:    key process loop
-    while read -s -n 1 -r _key ; do
+    while read -s -N 1 -r _key ; do
       case ${q}${d}{_key}${q} in
 #[of]:        escaped keys
         ${d}'\E')
-          read -s -n 2 -r -t .1 _key || {
+          read -s -N 2 -r -t .1 _key || {
 #[of]:            esc
 #[c]            esc itself is just a single char
 #[c]            if read timeout is reached the key must be esc
             break
 #[cf]
           }
+          [[ ${q}${d}{_key}${q} == '[1' ]] && read -s -N 3 -r -t .1 _key
           case ${q}${d}{_key}${q} in
 #[of]:            mouse
             '[<')
               _mouse=${q}${q}
-              _mouseEvent=( _ _ _ _ _ )
-              while read -s -n 1 -r _key ; do
-                _mouse=${q}${d}{_mouse}${d}{_key}${q}
+              while read -s -N 1 -r _key ; do
                 [[ ${q}${d}{_key}${q} =~ (M|m) ]] && break
+                _mouse=${q}${d}{_mouse}${d}{_key}${q}
               done
-              [[ -z ${q}${d}{_mouse%%*M}${q} ]] && _mouseEvent[4]=${q}down${q}
-              [[ -z ${q}${d}{_mouse%%*m}${q} ]] && _mouseEvent[4]=${q}up${q}
-              _mouse=${q}${d}{_mouse:0:-1}${q}
-              _mouseEvent=( ${d}{_mouse//;/ } _ ${d}{_mouseEvent[4]} )
+
+              [[ ${q}${d}{_key}${q} == ${q}M${q} ]] && _key=${q}down${q} || _key=${q}up${q}
+              _mouseEvent=( ${d}{_mouse//;/ } _ ${d}{_key} )
 
               [[ ${q}${d}{_mouseEvent[0]}${q} == 0 ]] && _mouseEvent[3]=${q}button_left${q}
               [[ ${q}${d}{_mouseEvent[0]}${q} == 1 ]] && _mouseEvent[3]=${q}button_middle${q}
@@ -283,6 +282,26 @@ function menu.open {
 #[c]              echo ${q}${d}{_mouseEvent[@]}---mouse${q}
               ;;
 #[cf]
+#[of]:            shift up)
+            '[a'|';2A')
+              echo shift up
+              ;;
+#[cf]
+#[of]:            shift down)
+            '[b'|';2B')
+              echo shift down
+              ;;
+#[cf]
+#[of]:            shift left)
+            '[d'|';2D')
+              echo shift left
+              ;;
+#[cf]
+#[of]:            shift right)
+            '[c'|';2C')
+              echo shift right
+              ;;
+#[cf]
 #[of]:            up)
             '[A')
               ${o}.decselecteditem
@@ -321,15 +340,16 @@ function menu.open {
           ;;
 #[cf]
 #[of]:        enter)
-        '')
+        '
+')
           ((${ov}enter)) && {
             ${c}.mouseDisable
             ${ov}item${d}((${ov}selecteditem)).runprog
-#[c]            ${ov}item${d}((${ov}selecteditem)).getprog ${mv}prog
-#[c]            [[ -n ${q}${d}{${mv}prog}${q} ]] && eval ${q}${d}{${mv}prog}${q}
-#[c]            if [[ -n ${q}${d}{${mv}prog}${q} ]] ; then
+#[c]            ${ov}item${d}((${ov}selecteditem)).getprog ${omv}prog
+#[c]            [[ -n ${q}${d}{${omv}prog}${q} ]] && eval ${q}${d}{${omv}prog}${q}
+#[c]            if [[ -n ${q}${d}{${omv}prog}${q} ]] ; then
 #[c]              trap ${q}echo TRAPed signal${q} INT
-#[c]              eval ${q}${d}{${mv}prog}${q}
+#[c]              eval ${q}${d}{${omv}prog}${q}
 #[c]              trap - INT
 #[c]            fi
             ${c}.mouseEnable
@@ -343,12 +363,14 @@ function menu.open {
         *)
           if ${ov}hotkeys.getkey _item ${q}${d}{_key}${q} ; then
             ${ov}selecteditem=${d}{_item}
+            ${c}.mouseDisable
             ${ov}item${d}((${ov}selecteditem)).runprog
+            ${c}.mouseEnable
             ${ov}enter=1
             ${c}.calcscreensize
             ${o}.refresh
           else
-            echo ${q}single ascii ---${d}{_key}---chr${q}
+            echo ${q}ascii ---${d}{_key}---chr${q}
           fi 
           ;;
 #[cf]
@@ -377,13 +399,13 @@ function menu.calcTopLeft {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset i ${mv}name
+    typeset i ${omv}name
 
     ${ov}width=12
     [[ ${d}{#${ov}title} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${ov}title}
     for ((i=0;i<${d}{${ov}totalitems};i++)) ; do
-      ${ov}item${d}{i}.getname ${mv}name
-      [[ ${d}{#${mv}name} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${mv}name}
+      ${ov}item${d}{i}.getname ${omv}name
+      [[ ${d}{#${omv}name} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${omv}name}
     done
     ((${ov}width+=9))
     ${ov}left=${d}((${cv}width/2-${ov}width/2+1))
@@ -420,7 +442,7 @@ function menu.refresh {
 #[cf]
   eval "
     typeset i j _vpositon _exitmsg
-    typeset ${mv}type ${mv}hotkey ${mv}name ${mv}prog
+    typeset ${omv}type ${omv}hotkey ${omv}name ${omv}prog
 
     ${o}.calcTopLeft
 #[c]    ${ov}itemPositions.getsize ! && ${ov}firstrun=${q}false${q} || ${ov}firstrun=${q}true${q}
@@ -446,12 +468,12 @@ function menu.refresh {
       ${c}.setcursorxy ${d}((${ov}left)) ${d}((_vpositon+i))
 #[c]      echo -n ${q}${d}{i}${d}{${ov}totalitems}${q}
 
-      ${ov}item${d}{i}.gettype ${mv}type
-#[c]      echo -en ${q}${d}{${mv}type}${q}
+      ${ov}item${d}{i}.gettype ${omv}type
+#[c]      echo -en ${q}${d}{${omv}type}${q}
 
       echo -n '*'
       ((i==${ov}selecteditem)) && echo -en ${q}\\033[7m${q}
-      case ${d}{${mv}type} in
+      case ${d}{${omv}type} in
 #[of]:        spacer)
         spacer)
           for ((j=0;j<${ov}width-2;j++)) ; do
@@ -461,13 +483,13 @@ function menu.refresh {
 #[cf]
 #[of]:        action|*)
         action|*)
-          ${ov}item${d}{i}.gethotkey ${mv}hotkey
-          ${ov}item${d}{i}.getname ${mv}name
-          while ((${d}{#${mv}name}<${ov}width-7)) ; do
-            ${mv}name=${q}${d}{${mv}name} ${q}
+          ${ov}item${d}{i}.gethotkey ${omv}hotkey
+          ${ov}item${d}{i}.getname ${omv}name
+          while ((${d}{#${omv}name}<${ov}width-7)) ; do
+            ${omv}name=${q}${d}{${omv}name} ${q}
           done
           ${d}{${ov}firstrun} && ${ov}itemPositions.setkey ${q}${d}((_vpositon+i))${q} ${q}${d}{i}${q}
-          echo -n ${q}  ${d}{${mv}hotkey:- }. ${d}{${mv}name}${q}
+          echo -n ${q}  ${d}{${omv}hotkey:- }. ${d}{${omv}name}${q}
           ;;
 #[cf]
       esac
@@ -520,11 +542,11 @@ function menu.run_item_by_name {
     _name=${q}${d}1${q}
 
     typeset i j  _exitmsg
-    typeset ${mv}name
+    typeset ${omv}name
 
     for ((i=0;i<${ov}totalitems;i++)) ; do
-      ${ov}item${d}{i}.getname ${mv}name
-      if [[ ${q}${d}{${mv}name}${q} == ${q}${d}{_name}${q} ]] ; then
+      ${ov}item${d}{i}.getname ${omv}name
+      if [[ ${q}${d}{${omv}name}${q} == ${q}${d}{_name}${q} ]] ; then
         ${ov}item${d}{i}.runprog
         break
       fi
@@ -546,11 +568,11 @@ function menu.list_runnable_items_by_name {
     _name=${q}${d}1${q}
 
     typeset i j  _exitmsg
-    typeset ${mv}name
+    typeset ${omv}name
 
     for ((i=0;i<${ov}totalitems;i++)) ; do
-      ${ov}item${d}{i}.getname ${mv}name
-      ${ov}item${d}{i}.hasprog && echo ${q}${d}${mv}name${q}
+      ${ov}item${d}{i}.getname ${omv}name
+      ${ov}item${d}{i}.hasprog && echo ${q}${d}${omv}name${q}
     done
 
     return 0
@@ -631,19 +653,19 @@ function ${c}.setcursorxy {
 #[of]:    function ${c}.mouseEnable {
 function ${c}.mouseEnable {
   stty -echo
-  echo -en ${q}\\e[?1000h\\e[?1006h\\e[?1015h${q}
+  echo -en '\e[?1000;1006;1015h'
 }
 #[cf]
 #[of]:    function ${c}.mouseDisable {
 function ${c}.mouseDisable {
   stty echo
-  echo -en ${q}\\e[?1000l\\e[?1006l\\e[?1015l${q}
+  echo -en '\e[?1000;1001;1002;1003;1006;1015l'
 }
 #[cf]
 #[of]:    class data
 newvar ${cv}height ${cv}width
-${c}.calcscreensize
 #[cf]
+    ${c}.calcscreensize
   "
 }
 #[cf]
@@ -718,7 +740,7 @@ function menuitem.constructor {
         ${ov}${i}=${q}${d}1${q}
       }
       function ${o}.get${i} {
-        eval ${d}1=\\${q}\${d}{${ov}${i}}\\${q}
+        eval ${d}1=\\${q}\\${d}{${ov}${i}}\\${q}
       }
     "
   done
