@@ -1,6 +1,94 @@
 #!/bin/ksh
 
 #[of]:menu
+#[of]:class methods
+#[of]:function menu.classconstructor {
+function menu.classconstructor {
+#[c]object
+#[of]:  includes
+  include hash
+#[c]  include referenceid
+#[cf]
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.calcscreensize {
+function ${c}.calcscreensize {
+  set -- ${d}(stty size 2>/dev/null)
+  ${cv}height=${d}1
+  ${cv}width=${d}2
+  [[ -z ${q}${d}{${cv}height}${q} ]] && {
+    ${cv}height=24
+    ${cv}width=80
+  }
+#[c]  echo ${d}{${cv}height} ${d}{${cv}width}
+#[c]  read -n 1
+  return 0
+}
+#[cf]
+#[of]:    function ${c}.setScreenHeight {
+function ${c}.setScreenHeight {
+  #to get the resize command
+  #sudo apt install xterm
+  typeset _height
+  
+  if isset TERM && [[ -z "${d}{TERM##xterm*}" ]] && which resize &>/dev/null ; then
+    _height=${d}1
+    resize -s ${d}{_height} ${d}{${cv}width} &>/dev/null || return 1
+    ${cv}height=${d}{_height}
+  else
+    return 1
+  fi
+  return 0
+}
+#[cf]
+#[of]:    function ${c}.setScreenWidth {
+function ${c}.setScreenWidth {
+  #to get the resize command
+  #sudo apt install xterm
+  typeset _width
+
+  if isset TERM && [[ -z "${d}{TERM##xterm*}" ]] && which resize &>/dev/null ; then
+    _width=${d}1
+    resize -s ${d}{${cv}height} ${d}{_width} &>/dev/null || return 1
+    ${cv}width=${d}{_width}
+  else
+    return 1
+  fi
+  return 0
+}
+#[cf]
+#[of]:    function ${c}.setcursorxy {
+function ${c}.setcursorxy {
+  typeset _x _y
+  _x=${d}1
+  _y=${d}2
+  echo -en ${q}\\\\033[${d}{_y};${d}{_x}H${q}
+  return 0
+}
+#[cf]
+#[of]:    function ${c}.mouseEnable {
+function ${c}.mouseEnable {
+  stty -echo
+  echo -en '\e[?1000;1006;1015h'
+}
+#[cf]
+#[of]:    function ${c}.mouseDisable {
+function ${c}.mouseDisable {
+  stty echo
+  echo -en '\e[?1000;1001;1002;1003;1006;1015l'
+}
+#[cf]
+#[of]:    class data
+newvar ${cv}height ${cv}width
+#[cf]
+    ${c}.calcscreensize
+  "
+}
+#[cf]
+#[cf]
 #[of]:static methods
 #[of]:function menu.staticconstructor {
 function menu.staticconstructor {
@@ -579,94 +667,6 @@ function menu.list_runnable_items_by_name {
   "
 }
 #[cf]
-}
-#[cf]
-#[cf]
-#[of]:class methods
-#[of]:function menu.classconstructor {
-function menu.classconstructor {
-#[c]object
-#[of]:  includes
-  include hash
-#[c]  include referenceid
-#[cf]
-#[of]:  set common environment
-#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
-  . ${gl_classpath}/classcommonenv.sh
-#[cf]
-  eval "
-#[of]:    function ${c}.calcscreensize {
-function ${c}.calcscreensize {
-  set -- ${d}(stty size 2>/dev/null)
-  ${cv}height=${d}1
-  ${cv}width=${d}2
-  [[ -z ${q}${d}{${cv}height}${q} ]] && {
-    ${cv}height=24
-    ${cv}width=80
-  }
-#[c]  echo ${d}{${cv}height} ${d}{${cv}width}
-#[c]  read -n 1
-  return 0
-}
-#[cf]
-#[of]:    function ${c}.setScreenHeight {
-function ${c}.setScreenHeight {
-  #to get the resize command
-  #sudo apt install xterm
-  typeset _height
-  
-  if isset TERM && [[ -z "${d}{TERM##xterm*}" ]] && which resize &>/dev/null ; then
-    _height=${d}1
-    resize -s ${d}{_height} ${d}{${cv}width} &>/dev/null || return 1
-    ${cv}height=${d}{_height}
-  else
-    return 1
-  fi
-  return 0
-}
-#[cf]
-#[of]:    function ${c}.setScreenWidth {
-function ${c}.setScreenWidth {
-  #to get the resize command
-  #sudo apt install xterm
-  typeset _width
-
-  if isset TERM && [[ -z "${d}{TERM##xterm*}" ]] && which resize &>/dev/null ; then
-    _width=${d}1
-    resize -s ${d}{${cv}height} ${d}{_width} &>/dev/null || return 1
-    ${cv}width=${d}{_width}
-  else
-    return 1
-  fi
-  return 0
-}
-#[cf]
-#[of]:    function ${c}.setcursorxy {
-function ${c}.setcursorxy {
-  typeset _x _y
-  _x=${d}1
-  _y=${d}2
-  echo -en ${q}\\\\033[${d}{_y};${d}{_x}H${q}
-  return 0
-}
-#[cf]
-#[of]:    function ${c}.mouseEnable {
-function ${c}.mouseEnable {
-  stty -echo
-  echo -en '\e[?1000;1006;1015h'
-}
-#[cf]
-#[of]:    function ${c}.mouseDisable {
-function ${c}.mouseDisable {
-  stty echo
-  echo -en '\e[?1000;1001;1002;1003;1006;1015l'
-}
-#[cf]
-#[of]:    class data
-newvar ${cv}height ${cv}width
-#[cf]
-    ${c}.calcscreensize
-  "
 }
 #[cf]
 #[cf]
