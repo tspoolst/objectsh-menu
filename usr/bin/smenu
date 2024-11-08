@@ -1,5 +1,256 @@
 #!/bin/bash
 #[of]:functions
+#[of]:function pause {
+function pause {
+  typeset _key
+  typeset lc_timeout lc_message lc_errorlevel
+  lc_errorlevel=0
+  isnum "$1" && {
+    lc_timeout="$1"
+    shift
+  }
+  lc_message="${1:-press any key to continue}"
+  
+  echo -en "\e[?1000;1006;1015h"
+
+  if ${gl_pause:-true} ; then
+    if [[ -z "${lc_timeout}" ]] ; then
+      echo -n "${lc_message}"
+      while read -s -N 1 -r _key ; do
+        pauseHandleKey "${_key}" && break
+      done
+    else
+      echo -n "${lc_message} - ${lc_timeout}"
+      for ((b=${lc_timeout};b>0;b--)) ; do
+        ((b>9)) && echo -ne "\b\b${b}" || echo -ne "\b\b ${b}"
+        if read -s -t 1 -N 1 -r _key ; then
+          pauseHandleKey "${_key}" && {
+            lc_errorlevel=0
+            break
+          }
+        else
+          lc_errorlevel=1
+        fi
+      done
+    fi
+  fi
+  echo -en "\e[?1000;1006;1015l"
+  return ${lc_errorlevel}
+}
+#[of]:function pauseHandleKey {
+function pauseHandleKey {
+  typeset _key _mouse _mouseEvent
+  _key="$1"
+  case "${_key}" in
+#[of]:    escaped keys
+        $'\E')
+          read -s -n 2 -r -t .1 _key || {
+#[of]:            esc
+#[c]            esc itself is just a single char
+#[c]            if read timeout is reached the key must be esc
+            return 0
+#[cf]
+          }
+          case "${_key}" in
+#[of]:            mouse
+            '[<')
+              _mouse=""
+              _mouseEvent=( _ _ _ _ _ )
+              while read -s -n 1 -r _key ; do
+                _mouse="${_mouse}${_key}"
+                [[ "${_key}" =~ (M|m) ]] && break
+              done
+              [[ -z "${_mouse%%*M}" ]] && _mouseEvent[4]="down"
+              [[ -z "${_mouse%%*m}" ]] && _mouseEvent[4]="up"
+              _mouse="${_mouse:0:-1}"
+              _mouseEvent=( ${_mouse//\;/ } _ ${_mouseEvent[4]} )
+
+              [[ "${_mouseEvent[0]}" =~ (1) && "${_mouseEvent[4]}" == "down" ]] && {
+                if read -s -n 1 -r _key ; then
+                  pauseHandleKey "${_key}" && return 0
+                else
+                  return 1
+                fi
+              }
+
+              [[ "${_mouseEvent[0]}" =~ (0|1|2) && "${_mouseEvent[4]}" == "up" ]]
+              ;;
+#[cf]
+#[of]:            *)
+            *)
+              return 0
+              ;;
+#[cf]
+          esac
+          ;;
+#[cf]
+#[of]:    *)
+        *)
+          return 0
+          ;;
+#[cf]
+  esac
+}
+#[cf]
+#[cf]
+#[of]:function askyn {
+function askyn {
+  typeset _key _return _mouse _mouseEvent
+  echo -en "\e[?1000;1006;1015h"
+  echo -n "${1:-continue}? [y/n] "
+  while true ; do
+    read -s -n 1 -r _key
+    case "${_key}" in
+#[of]:      escaped keys
+      $'\E')
+        read -s -n 2 -r -t .1 _key || {
+#[of]:          esc
+#[c]            esc itself is just a single char
+#[c]            if read timeout is reached the key must be esc
+            continue
+#[cf]
+        }
+        case "${_key}" in
+#[of]:          mouse
+            '[<')
+              _mouse=""
+              _mouseEvent=( _ _ _ _ _ )
+              while read -s -n 1 -r _key ; do
+                _mouse="${_mouse}${_key}"
+                [[ "${_key}" =~ (M|m) ]] && break
+              done
+              [[ -z "${_mouse%%*M}" ]] && _mouseEvent[4]="down"
+              [[ -z "${_mouse%%*m}" ]] && _mouseEvent[4]="up"
+              _mouse="${_mouse:0:-1}"
+              _mouseEvent=( ${_mouse//\;/ } _ ${_mouseEvent[4]} )
+
+              [[ "${_mouseEvent[0]}" =~ (0) && "${_mouseEvent[4]}" == "up" ]] && { _return=0;break; }
+              [[ "${_mouseEvent[0]}" =~ (2) && "${_mouseEvent[4]}" == "up" ]] && { _return=1;break; }
+              ;;
+#[cf]
+        esac
+        ;;
+#[cf]
+      y) _return=0;break;;
+      *) _return=1;break;;
+    esac
+  done
+  echo
+  echo -en "\e[?1000;1006;1015l"
+  return ${_return}
+}
+#[cf]
+#[c]
+#[of]:function mouseEnable {
+function mouseEnable {
+  stty -echo
+  command echo -en "\e[?1000h\e[?1006h\e[?1015h"
+}
+#[cf]
+#[of]:function mouseDisable {
+function mouseDisable {
+  stty echo
+  command echo -en "\e[?1000l\e[?1006l\e[?1015l"
+}
+#[cf]
+#[c]
+#[of]:function fn_setTerminalTitle {
+function fn_setTerminalTitle {
+  echo -e "\e]2;$*\a"
+}
+#[cf]
+#[c]
+#[of]:function fn_secToHMS {
+function fn_secToHMS {
+  typeset h m s
+  s=$1
+  ((h=s/60/60))
+  ((s=s-h*60*60))
+  ((m=s/60))
+  ((s=s-m*60))
+  printf '%d:%02d:%02d' ${h} ${m} ${s}
+}
+#[cf]
+#[c]
+#[of]:function padFront {
+function padFront {
+  typeset lc_string lc_pad lc_length
+  lc_string="$3"
+  lc_length="$2"
+  printf -v lc_pad '%'${lc_length}'s' " "
+  lc_string="${lc_pad:0:$((lc_length-${#lc_string}))}${lc_string}"
+  if [[ "$1" = "-" ]] ; then
+    echo "${lc_string}"
+  else
+    eval $1=\"\${lc_string}\"
+  fi
+}
+#[cf]
+#[c]
+#[of]:function isdir {
+function isdir {
+#[of]:  usage
+  if [ -z "$1" ] ; then
+    echo "Usage: isdir dirname"
+    echo "Error: must have at least 1 argument"
+    echo "Description: a simplified way of testing if something is a directory."
+    echo "Examples:"
+    echo '  "if isdir /home ; then'
+    echo '    echo is a dir'
+    echo '  else'
+    echo '    echo is not a dir'
+    echo '  fi"'
+    echo '  statement may also be negated'
+    echo '    "if ! isdir /home ; then"'
+    echo "Returns:"
+    echo "  0 true"
+    echo "  1 false"
+    exit 1
+  fi
+#[cf]
+  [ -d "$1" ] && return 0
+  return 1
+}
+#[cf]
+#[of]:function isdirempty {
+function isdirempty {
+#[of]:  usage
+  if [ -z "$1" ] ; then
+    echo "Usage: isdiremput dirname"
+    echo "Error: must have at least 1 argument"
+    echo "Description: check if a directory is empty."
+    echo "Examples:"
+    echo '  "if isdirempty /home ; then'
+    echo '    echo dir is empty'
+    echo '  else'
+    echo '    echo dir containes files'
+    echo '  fi"'
+    echo '  statement may also be negated'
+    echo '    "if ! isdirempty /home ; then"'
+    echo "Returns:"
+    echo "  0 true"
+    echo "  1 false"
+    exit 1
+  fi
+#[cf]
+  ## if target is not a dir just return false
+  [ -d "$1" ] || return 1
+  
+  ls -a "$1" | grep -q -v -e '^\.$' -e '^\..$' && return 1 || return 0
+}
+#[cf]
+#[of]:function cleandir {
+function cleandir {
+  [[ -n "$1" && -d "$1" && "$1" != "/" && "$1" != "${HOME}" ]] || {
+    echo "dir path to clean must not be not root, home, or EMPTY!"
+    exit 1
+  }
+  (shopt -s dotglob;rm -rvf --one-file-system "$1"/*) || {
+    echo "rm failed, unable to clean \"$1\""
+    exit 1
+  }
+}
+#[cf]
 #[cf]
 #[of]:includes
 #[l]:classdeff.bsh:/usr/lib/objectsh-1/classdeff.bsh
@@ -10,37 +261,46 @@ gl_objectshbase=/usr/lib/objectsh-1
 include menu
 #include /usr/lib/objectsh-1.0/sclass/menu
 #[cf]
+#[of]:setup vars
+aset gl_hotkeys {a..p} {r..z} {A..Z}
+
+#[cf]
 #[of]:main
+gl_menuindex=0
 new menu main
 main.settitle main
-main.additem command "a" "do this" 'clear;stty size;read -n 1'
+main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'clear;stty size;pause 30'
 main.additem spacer
-main.additem command "1" "do that" 'echo 2'
-main.additem command "2" "other option" 'clear;ls -l ~;read -n 1'
-main.additem command "3" "another" 'echo yes2'
-main.additem command "4" "a long line for the menu tttt gggg" 'echo yes3'
-main.additem command "5" "another" 'echo yes4'
-main.additem command "6" "sub1" 'sub1.open'
+main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
+main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
+main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
+main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg" 'echo yes3'
+main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
+main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub1" 'sub1.open'
+
+gl_menuindex=0
 new menu sub1
 sub1.settitle sub1
-sub1.additem command "a" "do this" 'echo 1'
+sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'echo 1'
 sub1.additem spacer
-sub1.additem command "1" "do that" 'echo 2'
-sub1.additem command "2" "other option" 'clear;ls -l ~;read -n 1'
-sub1.additem command "3" "another" 'echo yes2'
-sub1.additem command "4" "a long line for the menu tttt gggg cccc" 'echo yes3'
-sub1.additem command "5" "another" 'echo yes4'
-sub1.additem command "6" "sub2" 'sub2.open'
+sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
+sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
+sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
+sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg cccc" 'echo yes3'
+sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
+sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub2" 'sub2.open'
+
+gl_menuindex=0
 new menu sub2
 sub2.settitle sub2
-sub2.additem command "a" "do this" 'echo 1'
+sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'echo 1'
 sub2.additem spacer
-sub2.additem command "1" "do that" 'echo 2'
-sub2.additem command "2" "other option" 'clear;ls -l ~;read -n 1'
-sub2.additem command "3" "another" 'echo yes2'
-sub2.additem command "4" "a long line for the menu tttt gggg" 'echo yes3'
-sub2.additem command "5" "another" 'echo yes4'
-sub2.additem command "6" "sub1" 'sub1.open'
+sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
+sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
+sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
+sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg" 'echo yes3'
+sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
+sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub1" 'sub1.open'
 
 main.open
 exit
