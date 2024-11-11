@@ -137,7 +137,7 @@ function pauseHandleKey {
 #[cf]
 #[of]:              process mouse event queue list
               while ashift _mouseEvent _mouseEvents ; do
-                if [[ "${_mouseButtonState}" == "Down" ]] ; then
+                if [[ "${_mouseButtonState}" == "Up" ]] ; then
                   return 0
                 fi
               done
