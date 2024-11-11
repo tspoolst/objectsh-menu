@@ -446,9 +446,9 @@ function menu.open {
                         if (( (${ov}left+(${ov}width/2)-7)<${omv}mouseX && ${omv}mouseX<(${ov}left+(${ov}width/2)) )) ; then
                           :
                         elif (( (${ov}left+(${ov}width/2)+2)<${omv}mouseX && ${omv}mouseX<(${ov}left+(${ov}width/2)+7) )) ; then
-                          break
+                          break 2
                         else
-                          continue
+                          continue 2
                         fi
                       else
                         ${ov}selecteditem=${q}${d}{_selecteditem}${q}
