@@ -99,7 +99,6 @@ function pauseHandleKey {
                 [ -z "${_key#[Mm]}" ] && break
                 _mouseY="${_mouseY}${_key}"
               done
-              [[ "${_mouseButtonId}" == "35" ]]
               (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState="Down" || _mouseButtonState="Up"
 #[c]              ((_mouseX--))
 #[c]              ((_mouseY--))
@@ -220,7 +219,6 @@ function askyn {
                 [ -z "${_key#[Mm]}" ] && break
                 _mouseY="${_mouseY}${_key}"
               done
-              [[ "${_mouseButtonId}" == "35" ]]
               (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState="Down" || _mouseButtonState="Up"
 #[c]              ((_mouseX--))
 #[c]              ((_mouseY--))

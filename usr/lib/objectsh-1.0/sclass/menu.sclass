@@ -393,7 +393,6 @@ function menu.open {
                 [ -z ${q}${d}{${omv}key#[Mm]}${q} ] && break
                 ${omv}mouseY=${q}${d}{${omv}mouseY}${d}{${omv}key}${q}
               done
-              [[ ${q}${d}{${omv}mouseButtonId}${q} == ${q}35${q} ]]
               (( (${omv}mouseButtonId & 3 )!=3  )) && ${omv}mouseButtonState=${q}Down${q} || ${omv}mouseButtonState=${q}Up${q}
 #[c]              ((${omv}mouseX--))
 #[c]              ((${omv}mouseY--))
