@@ -244,7 +244,11 @@ function menu.open {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset i _key _mouse _mouseEvent _selecteditem
+    typeset i ${omv}key _mouse ${omv}mouseEvent _selecteditem
+    typeset ${omv}mouseEvent ${omv}mouseButtonId ${omv}mouseButtonName
+    typeset ${omv}mouseXStart ${omv}mouseYStart ${omv}mouseX ${omv}mouseY
+    typeset ${omv}mouseButtonState ${omv}shift ${omv}alt ${omv}ctrl
+
     typeset ${omv}name
 #[c]    typeset ${omv}prog
     ${ov}enter=1
@@ -274,44 +278,44 @@ function menu.open {
     ${c}.calcscreensize
     ${o}.refresh
 #[of]:    key process loop
-    while read -s -N 1 -r _key ; do
-      case ${q}${d}{_key}${q} in
+    while read -s -N 1 -r ${omv}key ; do
+      case ${q}${d}{${omv}key}${q} in
 #[of]:        escaped keys
         ${d}'\E')
-          read -s -N 2 -r -t .1 _key || {
+          read -s -N 2 -r -t .1 ${omv}key || {
 #[of]:            esc
 #[c]            esc itself is just a single char
 #[c]            if read timeout is reached the key must be esc
             break
 #[cf]
           }
-          [[ ${q}${d}{_key}${q} == '[1' ]] && read -s -N 3 -r -t .1 _key
-          case ${q}${d}{_key}${q} in
+          [[ ${q}${d}{${omv}key}${q} == '[1' ]] && read -s -N 3 -r -t .1 ${omv}key
+          case ${q}${d}{${omv}key}${q} in
 #[of]:            mouse
             '[<')
               _mouse=${q}${q}
-              while read -s -N 1 -r _key ; do
-                [[ ${q}${d}{_key}${q} =~ (M|m) ]] && break
-                _mouse=${q}${d}{_mouse}${d}{_key}${q}
+              while read -s -N 1 -r ${omv}key ; do
+                [[ ${q}${d}{${omv}key}${q} =~ (M|m) ]] && break
+                _mouse=${q}${d}{_mouse}${d}{${omv}key}${q}
               done
 
-              [[ ${q}${d}{_key}${q} == ${q}M${q} ]] && _key=${q}down${q} || _key=${q}up${q}
-              _mouseEvent=( ${d}{_mouse//;/ } _ ${d}{_key} )
+              [[ ${q}${d}{${omv}key}${q} == ${q}M${q} ]] && ${omv}key=${q}down${q} || ${omv}key=${q}up${q}
+              ${omv}mouseEvent=( ${d}{_mouse//;/ } _ ${d}{${omv}key} )
 
-              [[ ${q}${d}{_mouseEvent[0]}${q} == 0 ]] && _mouseEvent[3]=${q}button_left${q}
-              [[ ${q}${d}{_mouseEvent[0]}${q} == 1 ]] && _mouseEvent[3]=${q}button_middle${q}
-              [[ ${q}${d}{_mouseEvent[0]}${q} == 2 ]] && _mouseEvent[3]=${q}button_right${q}
+              [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 0 ]] && ${omv}mouseEvent[3]=${q}button_left${q}
+              [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 1 ]] && ${omv}mouseEvent[3]=${q}button_middle${q}
+              [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 2 ]] && ${omv}mouseEvent[3]=${q}button_right${q}
 
 #[of]:              left button click
-              if [[ ${q}${d}{_mouseEvent[0]}${q} == 0 && ${q}${d}{_mouseEvent[4]}${q} == ${q}up${q} ]] ; then
-                if (( (${ov}left-1)<_mouseEvent[1] && _mouseEvent[1]<(${ov}left+${ov}width) )) && \
-                  (( (${ov}top-1)<_mouseEvent[2] && _mouseEvent[2]<(${ov}bottom+1) )) ; then
-                    if ${ov}itemPositions.getkey _selecteditem ${q}${d}{_mouseEvent[2]}${q} ; then
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 0 && ${q}${d}{${omv}mouseEvent[4]}${q} == ${q}up${q} ]] ; then
+                if (( (${ov}left-1)<${omv}mouseEvent[1] && ${omv}mouseEvent[1]<(${ov}left+${ov}width) )) && \
+                  (( (${ov}top-1)<${omv}mouseEvent[2] && ${omv}mouseEvent[2]<(${ov}bottom+1) )) ; then
+                    if ${ov}itemPositions.getkey _selecteditem ${q}${d}{${omv}mouseEvent[2]}${q} ; then
 
                       if [[ ${q}${d}{_selecteditem}${q} == ${q}select${q} ]] ; then
-                        if (( (${ov}left+(${ov}width/2)-7)<_mouseEvent[1] && _mouseEvent[1]<(${ov}left+(${ov}width/2)) )) ; then
+                        if (( (${ov}left+(${ov}width/2)-7)<${omv}mouseEvent[1] && ${omv}mouseEvent[1]<(${ov}left+(${ov}width/2)) )) ; then
                           :
-                        elif (( (${ov}left+(${ov}width/2)+2)<_mouseEvent[1] && _mouseEvent[1]<(${ov}left+(${ov}width/2)+7) )) ; then
+                        elif (( (${ov}left+(${ov}width/2)+2)<${omv}mouseEvent[1] && ${omv}mouseEvent[1]<(${ov}left+(${ov}width/2)+7) )) ; then
                           break
                         else
                           continue
@@ -331,7 +335,7 @@ function menu.open {
                       }
                     fi
                 else
-                  echo ${q}no ${d}${ov}selecteditem -- ${d}{_mouseEvent[@]}${q}
+                  echo ${q}no ${d}${ov}selecteditem -- ${d}{${omv}mouseEvent[@]}${q}
 #[c]                  {
 #[c]                    ${c}.mouseDisable
 #[c]                    ${ov}item${d}((${ov}selecteditem)).runprog
@@ -343,31 +347,155 @@ function menu.open {
               fi
 #[cf]
 #[of]:              middle button click
-              [[ ${q}${d}{_mouseEvent[0]}${q} == 1 ]] && _mouseEvent[3]=${q}button_middle${q}
+              [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 1 ]] && ${omv}mouseEvent[3]=${q}button_middle${q}
 #[cf]
 #[of]:              right button click
-              if [[ ${q}${d}{_mouseEvent[0]}${q} == 2 && ${q}${d}{_mouseEvent[4]}${q} == ${q}up${q} ]] ; then
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 2 && ${q}${d}{${omv}mouseEvent[4]}${q} == ${q}up${q} ]] ; then
                 break
               fi
 #[cf]
 
 #[of]:              scroll up
-              if [[ ${q}${d}{_mouseEvent[0]}${q} == 64 ]] ; then
-#[c]                _mouseEvent[3]=${q}scroll${q}
-#[c]                _mouseEvent[4]=${q}up${q}
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 64 ]] ; then
+#[c]                ${omv}mouseEvent[3]=${q}scroll${q}
+#[c]                ${omv}mouseEvent[4]=${q}up${q}
                 ${o}.decselecteditem
                 ${o}.refresh
               fi
 #[cf]
 #[of]:              scroll down
-              if [[ ${q}${d}{_mouseEvent[0]}${q} == 65 ]] ; then
-#[c]                _mouseEvent[3]=${q}scroll${q}
-#[c]                _mouseEvent[4]=${q}down${q}
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == 65 ]] ; then
+#[c]                ${omv}mouseEvent[3]=${q}scroll${q}
+#[c]                ${omv}mouseEvent[4]=${q}down${q}
                 ${o}.incselecteditem
                 ${o}.refresh
               fi
 #[cf]
-#[c]              echo ${q}${d}{_mouseEvent[@]}---mouse${q}
+#[c]              echo ${q}${d}{${omv}mouseEvent[@]}---mouse${q}
+              ;;
+#[cf]
+#[of]:            mouse2
+            '['[34569])
+#[of]:              read mouse input strings from terminal
+              ${omv}mouseEvent=()
+              ${omv}mouseButtonId=${q}${${omv}key: -1}${q}
+              while read -s -N 1 -r ${omv}key ; do
+                [[ ${q}${d}{${omv}key}${q} == ${q};${q} ]] && break
+                ${omv}mouseButtonId=${q}${d}{${omv}mouseButtonId}${d}{${omv}key}${q}
+              done
+              ${omv}mouseX=${q}${q}
+              while read -s -N 1 -r ${omv}key ; do
+                [[ ${q}${d}{${omv}key}${q} == ${q};${q} ]] && break
+                ${omv}mouseX=${q}${d}{${omv}mouseX}${d}{${omv}key}${q}
+              done
+              ${omv}mouseY=${q}${q}
+              while read -s -N 1 -r ${omv}key ; do
+                [ -z ${q}${d}{${omv}key#[Mm]}${q} ] && break
+                ${omv}mouseY=${q}${d}{${omv}mouseY}${d}{${omv}key}${q}
+              done
+              [[ ${q}${d}{${omv}mouseButtonId}${q} == ${q}35${q} ]]
+              (( (${omv}mouseButtonId & 3 )!=3  )) && ${omv}mouseButtonState=${q}Down${q} || ${omv}mouseButtonState=${q}Up${q}
+              ((${omv}mouseX--))
+              ((${omv}mouseY--))
+#[cf]
+#[of]:              decode mouse input into event tags
+
+#[c]              left middle right scroll_Up scroll_Down
+#[c]              shift alt ctrl
+
+              (( (${omv}mouseButtonId & 4 )==4  )) && ${omv}shift=${q}Shift${q} || ${omv}shift=${q}${q}
+              (( (${omv}mouseButtonId & 8 )==8  )) && ${omv}alt=${q}Alt${q}     || ${omv}alt=${q}${q}
+              (( (${omv}mouseButtonId & 16)==16 )) && ${omv}ctrl=${q}Ctrl${q}   || ${omv}ctrl=${q}${q}
+              (( (${omv}mouseButtonId & 96)==64 )) && ${omv}mouseButtonState=${q}Drag${q}
+              case ${q}${d}((${omv}mouseButtonId & 99))${q} in
+                32) ${omv}mouseButtonName=${q}Left${q}   ;;&
+                33) ${omv}mouseButtonName=${q}Middle${q} ;;&
+                34) ${omv}mouseButtonName=${q}Right${q}  ;;&
+                96) ${omv}mouseButtonName=${q}Scroll${q}
+                    ${omv}mouseButtonState=${q}Up${q}    ;;
+                97) ${omv}mouseButtonName=${q}Scroll${q}
+                    ${omv}mouseButtonState=${q}Down${q}  ;;
+                 *) case ${q}${d}{${omv}mouseButtonState}${q} in
+                      Down)
+                        ${ov}previousMouseButtonName=${q}${d}{${omv}mouseButtonName}${q}
+                        ${ov}previousMouseX=${q}${d}{${omv}mouseX}${q}
+                        ${ov}previousMouseY=${q}${d}{${omv}mouseY}${q}
+                        ;;
+                      Up)
+                        ${omv}mouseButtonName=${q}${d}{${ov}previousMouseButtonName}${q}
+                        [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{${omv}mouseButtonName}${q} &&
+                            ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{${omv}mouseX}${q} &&
+                            ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{${omv}mouseY}${q} ]] && \
+                          ${omv}mouseEvent=( ${q}mouse${d}{${omv}mouseButtonName}Click${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q} )
+                        ;;
+                    esac
+                    ;;
+              esac
+              ((${d}{#${omv}mouseEvent[@]})) || ${omv}mouseEvent=( ${q}mouse${d}{${omv}mouseButtonName}${d}{${omv}mouseButtonState}${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q} )
+#[cf]
+
+#[of]:              left button click
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseLeftUp${q} ]] ; then
+                if (( (${ov}left-1)<${omv}mouseX && ${omv}mouseX<(${ov}left+${ov}width) )) && \
+                  (( (${ov}top-1)<${omv}mouseY && ${omv}mouseY<(${ov}bottom+1) )) ; then
+                    if ${ov}itemPositions.getkey _selecteditem ${q}${d}{${omv}mouseY}${q} ; then
+
+                      if [[ ${q}${d}{_selecteditem}${q} == ${q}select${q} ]] ; then
+                        if (( (${ov}left+(${ov}width/2)-7)<${omv}mouseX && ${omv}mouseX<(${ov}left+(${ov}width/2)) )) ; then
+                          :
+                        elif (( (${ov}left+(${ov}width/2)+2)<${omv}mouseX && ${omv}mouseX<(${ov}left+(${ov}width/2)+7) )) ; then
+                          break
+                        else
+                          continue
+                        fi
+                      else
+                        ${ov}selecteditem=${q}${d}{_selecteditem}${q}
+                      fi
+
+#[c]                      echo yes ${q}${d}${ov}selecteditem${q}
+                      {
+                        ${c}.mouseDisable
+                        ${ov}item${d}((${ov}selecteditem)).runprog
+                        ${c}.mouseEnable
+                        ${ov}enter=1
+                        ${c}.calcscreensize
+                        ${o}.refresh
+                      }
+                    fi
+                else
+                  echo ${q}no ${d}${ov}selecteditem -- ${d}{${omv}mouseEvent[@]}${q}
+#[c]                  {
+#[c]                    ${c}.mouseDisable
+#[c]                    ${ov}item${d}((${ov}selecteditem)).runprog
+#[c]                    ${c}.mouseEnable
+#[c]                    ${ov}enter=1
+#[c]                    ${o}.refresh
+#[c]                  }
+                fi
+              fi
+#[cf]
+#[of]:              middle button click
+
+#[cf]
+#[of]:              right button click
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseRightUp${q} ]] ; then
+                break
+              fi
+#[cf]
+
+#[of]:              scroll up
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseScrollUp${q} ]] ; then
+                ${o}.decselecteditem
+                ${o}.refresh
+              fi
+#[cf]
+#[of]:              scroll down
+              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseScrollDown${q} ]] ; then
+                ${o}.incselecteditem
+                ${o}.refresh
+              fi
+#[cf]
+#[c]              echo ${q}${d}{${omv}mouseEvent[@]}---mouse${q}
               ;;
 #[cf]
 #[of]:            shift up)
@@ -416,7 +544,7 @@ function menu.open {
 #[cf]
 #[of]:            *)
             *)
-              echo ${q}ascii ---${d}{_key}---esc${q}
+              echo ${q}ascii ---${d}{${omv}key}---esc${q}
               ;;
 #[cf]
           esac
@@ -449,7 +577,7 @@ function menu.open {
 #[cf]
 #[of]:        *)
         *)
-          if ${ov}hotkeys.getkey _item ${q}${d}{_key}${q} ; then
+          if ${ov}hotkeys.getkey _item ${q}${d}{${omv}key}${q} ; then
             ${ov}selecteditem=${d}{_item}
             ${c}.mouseDisable
             ${ov}item${d}((${ov}selecteditem)).runprog
@@ -458,7 +586,7 @@ function menu.open {
             ${c}.calcscreensize
             ${o}.refresh
           else
-            echo ${q}ascii ---${d}{_key}---chr${q}
+            echo ${q}ascii ---${d}{${omv}key}---chr${q}
           fi 
           ;;
 #[cf]
