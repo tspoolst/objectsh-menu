@@ -141,6 +141,7 @@ function pauseHandleKey {
                   return 0
                 fi
               done
+              return 1
 #[cf]
               ;;
 #[cf]

@@ -423,10 +423,10 @@ function menu.open {
                         ;;
                       Up)
                         ${omv}mouseButtonName=${q}${d}{${ov}previousMouseButtonName}${q}
-                        [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{${omv}mouseButtonName}${q} &&
-                            ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{${omv}mouseX}${q} &&
-                            ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{${omv}mouseY}${q} ]] && \
-                          aunshift ${omv}mouseEvents ${q}mouse${d}{${omv}mouseButtonName}Click${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q}
+#[c]                        [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{${omv}mouseButtonName}${q} &&
+#[c]                            ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{${omv}mouseX}${q} &&
+#[c]                            ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{${omv}mouseY}${q} ]] && \
+#[c]                          aunshift ${omv}mouseEvents ${q}mouse${d}{${omv}mouseButtonName}Click${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q}
                         ;;
                     esac
                     ;;
@@ -436,8 +436,8 @@ function menu.open {
 #[of]:              process mouse event queue list
               while ashift ${omv}mouseEvent ${omv}mouseEvents ; do
                 echo ${q}${d}{${omv}mouseEvent}--${d}{${omv}mouseX}x${d}{${omv}mouseY}--mouse2${q}
-#[of]:                left button click
-              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftClick${q} ]] ; then
+#[of]:                left button up
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftUp${q} ]] ; then
                 if (( (${ov}left-1)<${omv}mouseX && ${omv}mouseX<(${ov}left+${ov}width) )) && \
                   (( (${ov}top-1)<${omv}mouseY && ${omv}mouseY<(${ov}bottom+1) )) ; then
                     if ${ov}itemPositions.getkey _selecteditem ${q}${d}{${omv}mouseY}${q} ; then
@@ -476,11 +476,11 @@ function menu.open {
                 fi
               fi
 #[cf]
-#[of]:                middle button click
+#[of]:                middle button up
 
 #[cf]
-#[of]:                right button click
-              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightClick${q} ]] ; then
+#[of]:                right button up
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightUp${q} ]] ; then
                 break 2
               fi
 #[cf]
