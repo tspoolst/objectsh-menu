@@ -436,8 +436,8 @@ function menu.open {
 #[of]:              process mouse event queue list
               while ashift ${omv}mouseEvent ${omv}mouseEvents ; do
                 echo ${q}${d}{${omv}mouseEvent}--${d}{${omv}mouseX}x${d}{${omv}mouseY}--mouse2${q}
-#[of]:                left button up
-              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftUp${q} ]] ; then
+#[of]:                left button click
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftClick${q} ]] ; then
                 if (( (${ov}left-1)<${omv}mouseX && ${omv}mouseX<(${ov}left+${ov}width) )) && \
                   (( (${ov}top-1)<${omv}mouseY && ${omv}mouseY<(${ov}bottom+1) )) ; then
                     if ${ov}itemPositions.getkey _selecteditem ${q}${d}{${omv}mouseY}${q} ; then
@@ -476,11 +476,11 @@ function menu.open {
                 fi
               fi
 #[cf]
-#[of]:                middle button up
+#[of]:                middle button click
 
 #[cf]
-#[of]:                right button up
-              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightUp${q} ]] ; then
+#[of]:                right button click
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightClick${q} ]] ; then
                 break 2
               fi
 #[cf]
