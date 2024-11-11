@@ -435,7 +435,7 @@ function menu.open {
 #[cf]
 #[of]:              process mouse event queue list
               while ashift ${omv}mouseEvent ${omv}mouseEvents ; do
-                echo ${q}${d}{${omv}mouseEvent}--${d}{${omv}mouseX}x${d}{${omv}mouseY}--mouse2${q}
+#[c]                echo ${q}${d}{${omv}mouseEvent}--${d}{${omv}mouseX}x${d}{${omv}mouseY}--mouse2${q}
 #[of]:                left button up
               if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftUp${q} ]] ; then
                 if (( (${ov}left-1)<${omv}mouseX && ${omv}mouseX<(${ov}left+${ov}width) )) && \
