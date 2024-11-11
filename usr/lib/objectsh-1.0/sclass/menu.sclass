@@ -245,7 +245,7 @@ function menu.open {
 #[cf]
   eval "
     typeset i ${omv}key _mouse ${omv}mouseEvent _selecteditem
-    typeset ${omv}mouseEvent ${omv}mouseButtonId ${omv}mouseButtonName
+    typeset ${omv}mouseEvent ${omv}mouseEvents ${omv}mouseButtonId ${omv}mouseButtonName
     typeset ${omv}mouseXStart ${omv}mouseYStart ${omv}mouseX ${omv}mouseY
     typeset ${omv}mouseButtonState ${omv}shift ${omv}alt ${omv}ctrl
 
@@ -377,7 +377,7 @@ function menu.open {
 #[of]:            mouse2
             '['[34569])
 #[of]:              read mouse input strings from terminal
-              ${omv}mouseEvent=()
+              ${omv}mouseEvents=()
               ${omv}mouseButtonId=${q}${d}{${omv}key: -1}${q}
               while read -s -N 1 -r ${omv}key ; do
                 [[ ${q}${d}{${omv}key}${q} == ${q};${q} ]] && break
@@ -426,16 +426,18 @@ function menu.open {
                         [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{${omv}mouseButtonName}${q} &&
                             ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{${omv}mouseX}${q} &&
                             ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{${omv}mouseY}${q} ]] && \
-                          ${omv}mouseEvent=( ${q}mouse${d}{${omv}mouseButtonName}Click${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q} )
+                          aunshift ${omv}mouseEvents ${q}mouse${d}{${omv}mouseButtonName}Click${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q}
                         ;;
                     esac
                     ;;
               esac
-              ((${d}{#${omv}mouseEvent[@]})) || ${omv}mouseEvent=( ${q}mouse${d}{${omv}mouseButtonName}${d}{${omv}mouseButtonState}${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q} )
+              aunshift ${omv}mouseEvents ${q}mouse${d}{${omv}mouseButtonName}${d}{${omv}mouseButtonState}${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q}
 #[cf]
-echo ${q}${d}{${omv}mouseEvent[@]}${q}
-#[of]:              left button click
-              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseLeftUp${q} ]] ; then
+#[of]:              process mouse event queue list
+              while ashift ${omv}mouseEvent ${omv}mouseEvents ; do
+                echo ${q}${d}{${omv}mouseEvent}---mouse2${q}
+#[of]:                left button click
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftUp${q} ]] ; then
                 if (( (${ov}left-1)<${omv}mouseX && ${omv}mouseX<(${ov}left+${ov}width) )) && \
                   (( (${ov}top-1)<${omv}mouseY && ${omv}mouseY<(${ov}bottom+1) )) ; then
                     if ${ov}itemPositions.getkey _selecteditem ${q}${d}{${omv}mouseY}${q} ; then
@@ -474,28 +476,29 @@ echo ${q}${d}{${omv}mouseEvent[@]}${q}
                 fi
               fi
 #[cf]
-#[of]:              middle button click
+#[of]:                middle button click
 
 #[cf]
-#[of]:              right button click
-              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseRightUp${q} ]] ; then
+#[of]:                right button click
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightUp${q} ]] ; then
                 break
               fi
 #[cf]
-
-#[of]:              scroll up
-              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseScrollUp${q} ]] ; then
+  
+#[of]:                scroll up
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseScrollUp${q} ]] ; then
                 ${o}.decselecteditem
                 ${o}.refresh
               fi
 #[cf]
-#[of]:              scroll down
-              if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseScrollDown${q} ]] ; then
+#[of]:                scroll down
+              if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseScrollDown${q} ]] ; then
                 ${o}.incselecteditem
                 ${o}.refresh
               fi
 #[cf]
-#[c]              echo ${q}${d}{${omv}mouseEvent[@]}---mouse${q}
+              done
+#[cf]
               ;;
 #[cf]
 #[of]:            shift up)
