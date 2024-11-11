@@ -378,7 +378,7 @@ function menu.open {
             '['[34569])
 #[of]:              read mouse input strings from terminal
               ${omv}mouseEvent=()
-              ${omv}mouseButtonId=${q}${${omv}key: -1}${q}
+              ${omv}mouseButtonId=${q}${d}{${omv}key: -1}${q}
               while read -s -N 1 -r ${omv}key ; do
                 [[ ${q}${d}{${omv}key}${q} == ${q};${q} ]] && break
                 ${omv}mouseButtonId=${q}${d}{${omv}mouseButtonId}${d}{${omv}key}${q}
@@ -433,7 +433,7 @@ function menu.open {
               esac
               ((${d}{#${omv}mouseEvent[@]})) || ${omv}mouseEvent=( ${q}mouse${d}{${omv}mouseButtonName}${d}{${omv}mouseButtonState}${d}{${omv}shift}${d}{${omv}alt}${d}{${omv}ctrl}${q} )
 #[cf]
-
+echo ${q}${d}{${omv}mouseEvent[@]}${q}
 #[of]:              left button click
               if [[ ${q}${d}{${omv}mouseEvent[0]}${q} == ${q}mouseLeftUp${q} ]] ; then
                 if (( (${ov}left-1)<${omv}mouseX && ${omv}mouseX<(${ov}left+${ov}width) )) && \
