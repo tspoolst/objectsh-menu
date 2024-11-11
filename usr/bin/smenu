@@ -76,6 +76,74 @@ function pauseHandleKey {
               [[ "${_mouseEvent[0]}" =~ (0|1|2) && "${_mouseEvent[4]}" == "up" ]]
               ;;
 #[cf]
+#[of]:            mouse-mintty-cygwin
+            '['[34569])
+#[of]:              read mouse input strings from terminal
+              _mouseEvents=()
+              _mouseButtonId=${q}${d}{_key: -1}${q}
+              while read -s -N 1 -r _key ; do
+                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
+                _mouseButtonId=${q}${d}{_mouseButtonId}${d}{_key}${q}
+              done
+              _mouseX=${q}${q}
+              while read -s -N 1 -r _key ; do
+                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
+                _mouseX=${q}${d}{_mouseX}${d}{_key}${q}
+              done
+              _mouseY=${q}${q}
+              while read -s -N 1 -r _key ; do
+                [ -z ${q}${d}{_key#[Mm]}${q} ] && break
+                _mouseY=${q}${d}{_mouseY}${d}{_key}${q}
+              done
+              [[ ${q}${d}{_mouseButtonId}${q} == ${q}35${q} ]]
+              (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState=${q}Down${q} || _mouseButtonState=${q}Up${q}
+#[c]              ((_mouseX--))
+#[c]              ((_mouseY--))
+#[cf]
+#[of]:              decode mouse input into event tags
+
+#[c]              left middle right scroll_Up scroll_Down
+#[c]              shift alt ctrl
+
+              (( (_mouseButtonId & 4 )==4  )) && _shift=${q}Shift${q} || _shift=${q}${q}
+              (( (_mouseButtonId & 8 )==8  )) && _alt=${q}Alt${q}     || _alt=${q}${q}
+              (( (_mouseButtonId & 16)==16 )) && _ctrl=${q}Ctrl${q}   || _ctrl=${q}${q}
+              (( (_mouseButtonId & 96)==64 )) && _mouseButtonState=${q}Drag${q}
+              case ${q}${d}((_mouseButtonId & 99))${q} in
+                32) _mouseButtonName=${q}Left${q}   ;;&
+                33) _mouseButtonName=${q}Middle${q} ;;&
+                34) _mouseButtonName=${q}Right${q}  ;;&
+                96) _mouseButtonName=${q}Scroll${q}
+                    _mouseButtonState=${q}Up${q}    ;;
+                97) _mouseButtonName=${q}Scroll${q}
+                    _mouseButtonState=${q}Down${q}  ;;
+                 *) case ${q}${d}{_mouseButtonState}${q} in
+                      Down)
+                        ${ov}previousMouseButtonName=${q}${d}{_mouseButtonName}${q}
+                        ${ov}previousMouseX=${q}${d}{_mouseX}${q}
+                        ${ov}previousMouseY=${q}${d}{_mouseY}${q}
+                        ;;
+                      Up)
+                        _mouseButtonName=${q}${d}{${ov}previousMouseButtonName}${q}
+                        [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{_mouseButtonName}${q} &&
+                            ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{_mouseX}${q} &&
+                            ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{_mouseY}${q} ]] && \
+                          aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}Click${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+                        ;;
+                    esac
+                    ;;
+              esac
+              aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}${d}{_mouseButtonState}${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+#[cf]
+#[of]:              process mouse event queue list
+              while ashift _mouseEvent _mouseEvents ; do
+                if [[ ${q}${d}{_mouseButtonState}${q} == ${q}Down${q} ]] ; then
+                  return 0
+                fi
+              done
+#[cf]
+              ;;
+#[cf]
 #[of]:            *)
             *)
               return 0
@@ -126,6 +194,73 @@ function askyn {
 
               [[ "${_mouseEvent[0]}" =~ (0) && "${_mouseEvent[4]}" == "up" ]] && { _return=0;break; }
               [[ "${_mouseEvent[0]}" =~ (2) && "${_mouseEvent[4]}" == "up" ]] && { _return=1;break; }
+              ;;
+#[cf]
+#[of]:          mouse-mintty-cygwin
+            '['[34569])
+#[of]:              read mouse input strings from terminal
+              _mouseEvents=()
+              _mouseButtonId=${q}${d}{_key: -1}${q}
+              while read -s -N 1 -r _key ; do
+                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
+                _mouseButtonId=${q}${d}{_mouseButtonId}${d}{_key}${q}
+              done
+              _mouseX=${q}${q}
+              while read -s -N 1 -r _key ; do
+                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
+                _mouseX=${q}${d}{_mouseX}${d}{_key}${q}
+              done
+              _mouseY=${q}${q}
+              while read -s -N 1 -r _key ; do
+                [ -z ${q}${d}{_key#[Mm]}${q} ] && break
+                _mouseY=${q}${d}{_mouseY}${d}{_key}${q}
+              done
+              [[ ${q}${d}{_mouseButtonId}${q} == ${q}35${q} ]]
+              (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState=${q}Down${q} || _mouseButtonState=${q}Up${q}
+#[c]              ((_mouseX--))
+#[c]              ((_mouseY--))
+#[cf]
+#[of]:              decode mouse input into event tags
+
+#[c]              left middle right scroll_Up scroll_Down
+#[c]              shift alt ctrl
+
+              (( (_mouseButtonId & 4 )==4  )) && _shift=${q}Shift${q} || _shift=${q}${q}
+              (( (_mouseButtonId & 8 )==8  )) && _alt=${q}Alt${q}     || _alt=${q}${q}
+              (( (_mouseButtonId & 16)==16 )) && _ctrl=${q}Ctrl${q}   || _ctrl=${q}${q}
+              (( (_mouseButtonId & 96)==64 )) && _mouseButtonState=${q}Drag${q}
+              case ${q}${d}((_mouseButtonId & 99))${q} in
+                32) _mouseButtonName=${q}Left${q}   ;;&
+                33) _mouseButtonName=${q}Middle${q} ;;&
+                34) _mouseButtonName=${q}Right${q}  ;;&
+                96) _mouseButtonName=${q}Scroll${q}
+                    _mouseButtonState=${q}Up${q}    ;;
+                97) _mouseButtonName=${q}Scroll${q}
+                    _mouseButtonState=${q}Down${q}  ;;
+                 *) case ${q}${d}{_mouseButtonState}${q} in
+                      Down)
+                        ${ov}previousMouseButtonName=${q}${d}{_mouseButtonName}${q}
+                        ${ov}previousMouseX=${q}${d}{_mouseX}${q}
+                        ${ov}previousMouseY=${q}${d}{_mouseY}${q}
+                        ;;
+                      Up)
+                        _mouseButtonName=${q}${d}{${ov}previousMouseButtonName}${q}
+                        [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{_mouseButtonName}${q} &&
+                            ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{_mouseX}${q} &&
+                            ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{_mouseY}${q} ]] && \
+                          aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}Click${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+                        ;;
+                    esac
+                    ;;
+              esac
+              aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}${d}{_mouseButtonState}${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+#[cf]
+#[of]:              process mouse event queue list
+              while ashift _mouseEvent _mouseEvents ; do
+                [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftUp${q} ]] && { _return=0;break 2; }
+                [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightUp${q} ]] && { _return=1;break 2; }
+              done
+#[cf]
               ;;
 #[cf]
         esac
