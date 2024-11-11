@@ -39,7 +39,11 @@ function pause {
 }
 #[of]:function pauseHandleKey {
 function pauseHandleKey {
-  typeset _key _mouse _mouseEvent
+  typeset _key _mouse
+  typeset _mouseEvent _mouseEvents _mouseButtonId _mouseButtonName
+  typeset _mouseXStart _mouseYStart _mouseX _mouseY
+  typeset _mouseButtonState _shift _alt _ctrl
+
   _key="$1"
   case "${_key}" in
 #[of]:    escaped keys
@@ -163,7 +167,11 @@ function pauseHandleKey {
 #[cf]
 #[of]:function askyn {
 function askyn {
-  typeset _key _return _mouse _mouseEvent
+  typeset _key _return _mouse
+  typeset _mouseEvent _mouseEvents _mouseButtonId _mouseButtonName
+  typeset _mouseXStart _mouseYStart _mouseX _mouseY
+  typeset _mouseButtonState _shift _alt _ctrl
+
   echo -en "\e[?1000;1006;1015h"
   echo -n "${1:-continue}? [y/n] "
   while true ; do
@@ -257,8 +265,8 @@ function askyn {
 #[cf]
 #[of]:              process mouse event queue list
               while ashift _mouseEvent _mouseEvents ; do
-                [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftUp${q} ]] && { _return=0;break 2; }
-                [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightUp${q} ]] && { _return=1;break 2; }
+                [[ ${q}${d}{_mouseEvent}${q} == ${q}mouseLeftUp${q} ]] && { _return=0;break 2; }
+                [[ ${q}${d}{_mouseEvent}${q} == ${q}mouseRightUp${q} ]] && { _return=1;break 2; }
               done
 #[cf]
               ;;

@@ -244,7 +244,7 @@ function menu.open {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset i ${omv}key _mouse ${omv}mouseEvent _selecteditem
+    typeset i ${omv}key _mouse _selecteditem
     typeset ${omv}mouseEvent ${omv}mouseEvents ${omv}mouseButtonId ${omv}mouseButtonName
     typeset ${omv}mouseXStart ${omv}mouseYStart ${omv}mouseX ${omv}mouseY
     typeset ${omv}mouseButtonState ${omv}shift ${omv}alt ${omv}ctrl
@@ -374,7 +374,7 @@ function menu.open {
 #[c]              echo ${q}${d}{${omv}mouseEvent[@]}---mouse${q}
               ;;
 #[cf]
-#[of]:            mouse2
+#[of]:            mouse-mintty-cygwin
             '['[34569])
 #[of]:              read mouse input strings from terminal
               ${omv}mouseEvents=()
@@ -436,7 +436,7 @@ function menu.open {
 #[of]:              process mouse event queue list
               while ashift ${omv}mouseEvent ${omv}mouseEvents ; do
                 echo ${q}${d}{${omv}mouseEvent}--${d}{${omv}mouseX}x${d}{${omv}mouseY}--mouse2${q}
-#[of]:                left button click
+#[of]:                left button up
               if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseLeftUp${q} ]] ; then
                 if (( (${ov}left-1)<${omv}mouseX && ${omv}mouseX<(${ov}left+${ov}width) )) && \
                   (( (${ov}top-1)<${omv}mouseY && ${omv}mouseY<(${ov}bottom+1) )) ; then
@@ -476,10 +476,10 @@ function menu.open {
                 fi
               fi
 #[cf]
-#[of]:                middle button click
+#[of]:                middle button up
 
 #[cf]
-#[of]:                right button click
+#[of]:                right button up
               if [[ ${q}${d}{${omv}mouseEvent}${q} == ${q}mouseRightUp${q} ]] ; then
                 break 2
               fi
