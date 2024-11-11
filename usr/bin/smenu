@@ -84,23 +84,23 @@ function pauseHandleKey {
             '['[34569])
 #[of]:              read mouse input strings from terminal
               _mouseEvents=()
-              _mouseButtonId=${q}${d}{_key: -1}${q}
+              _mouseButtonId="${_key: -1}"
               while read -s -N 1 -r _key ; do
-                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
-                _mouseButtonId=${q}${d}{_mouseButtonId}${d}{_key}${q}
+                [[ "${_key}" == ";" ]] && break
+                _mouseButtonId="${_mouseButtonId}${_key}"
               done
-              _mouseX=${q}${q}
+              _mouseX=""
               while read -s -N 1 -r _key ; do
-                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
-                _mouseX=${q}${d}{_mouseX}${d}{_key}${q}
+                [[ "${_key}" == ";" ]] && break
+                _mouseX="${_mouseX}${_key}"
               done
-              _mouseY=${q}${q}
+              _mouseY=""
               while read -s -N 1 -r _key ; do
-                [ -z ${q}${d}{_key#[Mm]}${q} ] && break
-                _mouseY=${q}${d}{_mouseY}${d}{_key}${q}
+                [ -z "${_key#[Mm]}" ] && break
+                _mouseY="${_mouseY}${_key}"
               done
-              [[ ${q}${d}{_mouseButtonId}${q} == ${q}35${q} ]]
-              (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState=${q}Down${q} || _mouseButtonState=${q}Up${q}
+              [[ "${_mouseButtonId}" == "35" ]]
+              (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState="Down" || _mouseButtonState="Up"
 #[c]              ((_mouseX--))
 #[c]              ((_mouseY--))
 #[cf]
@@ -109,39 +109,39 @@ function pauseHandleKey {
 #[c]              left middle right scroll_Up scroll_Down
 #[c]              shift alt ctrl
 
-              (( (_mouseButtonId & 4 )==4  )) && _shift=${q}Shift${q} || _shift=${q}${q}
-              (( (_mouseButtonId & 8 )==8  )) && _alt=${q}Alt${q}     || _alt=${q}${q}
-              (( (_mouseButtonId & 16)==16 )) && _ctrl=${q}Ctrl${q}   || _ctrl=${q}${q}
-              (( (_mouseButtonId & 96)==64 )) && _mouseButtonState=${q}Drag${q}
-              case ${q}${d}((_mouseButtonId & 99))${q} in
-                32) _mouseButtonName=${q}Left${q}   ;;&
-                33) _mouseButtonName=${q}Middle${q} ;;&
-                34) _mouseButtonName=${q}Right${q}  ;;&
-                96) _mouseButtonName=${q}Scroll${q}
-                    _mouseButtonState=${q}Up${q}    ;;
-                97) _mouseButtonName=${q}Scroll${q}
-                    _mouseButtonState=${q}Down${q}  ;;
-                 *) case ${q}${d}{_mouseButtonState}${q} in
+              (( (_mouseButtonId & 4 )==4  )) && _shift="Shift" || _shift=""
+              (( (_mouseButtonId & 8 )==8  )) && _alt="Alt"     || _alt=""
+              (( (_mouseButtonId & 16)==16 )) && _ctrl="Ctrl"   || _ctrl=""
+              (( (_mouseButtonId & 96)==64 )) && _mouseButtonState="Drag"
+              case "$((_mouseButtonId & 99))" in
+                32) _mouseButtonName="Left"   ;;&
+                33) _mouseButtonName="Middle" ;;&
+                34) _mouseButtonName="Right"  ;;&
+                96) _mouseButtonName="Scroll"
+                    _mouseButtonState="Up"    ;;
+                97) _mouseButtonName="Scroll"
+                    _mouseButtonState="Down"  ;;
+                 *) case "${_mouseButtonState}" in
                       Down)
-                        ${ov}previousMouseButtonName=${q}${d}{_mouseButtonName}${q}
-                        ${ov}previousMouseX=${q}${d}{_mouseX}${q}
-                        ${ov}previousMouseY=${q}${d}{_mouseY}${q}
+                        gl_previousMouseButtonName="${_mouseButtonName}"
+                        gl_previousMouseX="${_mouseX}"
+                        gl_previousMouseY="${_mouseY}"
                         ;;
                       Up)
-                        _mouseButtonName=${q}${d}{${ov}previousMouseButtonName}${q}
-                        [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{_mouseButtonName}${q} &&
-                            ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{_mouseX}${q} &&
-                            ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{_mouseY}${q} ]] && \
-                          aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}Click${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+                        _mouseButtonName="${gl_previousMouseButtonName}"
+                        [[  "${gl_previousMouseButtonName}" = "${_mouseButtonName}" &&
+                            "${gl_previousMouseX}" = "${_mouseX}" &&
+                            "${gl_previousMouseY}" = "${_mouseY}" ]] && \
+                          aunshift _mouseEvents "mouse${_mouseButtonName}Click${_shift}${_alt}${_ctrl}"
                         ;;
                     esac
                     ;;
               esac
-              aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}${d}{_mouseButtonState}${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+              aunshift _mouseEvents "mouse${_mouseButtonName}${_mouseButtonState}${_shift}${_alt}${_ctrl}"
 #[cf]
 #[of]:              process mouse event queue list
               while ashift _mouseEvent _mouseEvents ; do
-                if [[ ${q}${d}{_mouseButtonState}${q} == ${q}Down${q} ]] ; then
+                if [[ "${_mouseButtonState}" == "Down" ]] ; then
                   return 0
                 fi
               done
@@ -208,23 +208,23 @@ function askyn {
             '['[34569])
 #[of]:              read mouse input strings from terminal
               _mouseEvents=()
-              _mouseButtonId=${q}${d}{_key: -1}${q}
+              _mouseButtonId="${_key: -1}"
               while read -s -N 1 -r _key ; do
-                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
-                _mouseButtonId=${q}${d}{_mouseButtonId}${d}{_key}${q}
+                [[ "${_key}" == ";" ]] && break
+                _mouseButtonId="${_mouseButtonId}${_key}"
               done
-              _mouseX=${q}${q}
+              _mouseX=""
               while read -s -N 1 -r _key ; do
-                [[ ${q}${d}{_key}${q} == ${q};${q} ]] && break
-                _mouseX=${q}${d}{_mouseX}${d}{_key}${q}
+                [[ "${_key}" == ";" ]] && break
+                _mouseX="${_mouseX}${_key}"
               done
-              _mouseY=${q}${q}
+              _mouseY=""
               while read -s -N 1 -r _key ; do
-                [ -z ${q}${d}{_key#[Mm]}${q} ] && break
-                _mouseY=${q}${d}{_mouseY}${d}{_key}${q}
+                [ -z "${_key#[Mm]}" ] && break
+                _mouseY="${_mouseY}${_key}"
               done
-              [[ ${q}${d}{_mouseButtonId}${q} == ${q}35${q} ]]
-              (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState=${q}Down${q} || _mouseButtonState=${q}Up${q}
+              [[ "${_mouseButtonId}" == "35" ]]
+              (( (_mouseButtonId & 3 )!=3  )) && _mouseButtonState="Down" || _mouseButtonState="Up"
 #[c]              ((_mouseX--))
 #[c]              ((_mouseY--))
 #[cf]
@@ -233,40 +233,40 @@ function askyn {
 #[c]              left middle right scroll_Up scroll_Down
 #[c]              shift alt ctrl
 
-              (( (_mouseButtonId & 4 )==4  )) && _shift=${q}Shift${q} || _shift=${q}${q}
-              (( (_mouseButtonId & 8 )==8  )) && _alt=${q}Alt${q}     || _alt=${q}${q}
-              (( (_mouseButtonId & 16)==16 )) && _ctrl=${q}Ctrl${q}   || _ctrl=${q}${q}
-              (( (_mouseButtonId & 96)==64 )) && _mouseButtonState=${q}Drag${q}
-              case ${q}${d}((_mouseButtonId & 99))${q} in
-                32) _mouseButtonName=${q}Left${q}   ;;&
-                33) _mouseButtonName=${q}Middle${q} ;;&
-                34) _mouseButtonName=${q}Right${q}  ;;&
-                96) _mouseButtonName=${q}Scroll${q}
-                    _mouseButtonState=${q}Up${q}    ;;
-                97) _mouseButtonName=${q}Scroll${q}
-                    _mouseButtonState=${q}Down${q}  ;;
-                 *) case ${q}${d}{_mouseButtonState}${q} in
+              (( (_mouseButtonId & 4 )==4  )) && _shift="Shift" || _shift=""
+              (( (_mouseButtonId & 8 )==8  )) && _alt="Alt"     || _alt=""
+              (( (_mouseButtonId & 16)==16 )) && _ctrl="Ctrl"   || _ctrl=""
+              (( (_mouseButtonId & 96)==64 )) && _mouseButtonState="Drag"
+              case "$((_mouseButtonId & 99))" in
+                32) _mouseButtonName="Left"   ;;&
+                33) _mouseButtonName="Middle" ;;&
+                34) _mouseButtonName="Right"  ;;&
+                96) _mouseButtonName="Scroll"
+                    _mouseButtonState="Up"    ;;
+                97) _mouseButtonName="Scroll"
+                    _mouseButtonState="Down"  ;;
+                 *) case "${_mouseButtonState}" in
                       Down)
-                        ${ov}previousMouseButtonName=${q}${d}{_mouseButtonName}${q}
-                        ${ov}previousMouseX=${q}${d}{_mouseX}${q}
-                        ${ov}previousMouseY=${q}${d}{_mouseY}${q}
+                        gl_previousMouseButtonName="${_mouseButtonName}"
+                        gl_previousMouseX="${_mouseX}"
+                        gl_previousMouseY="${_mouseY}"
                         ;;
                       Up)
-                        _mouseButtonName=${q}${d}{${ov}previousMouseButtonName}${q}
-                        [[  ${q}${d}{${ov}previousMouseButtonName}${q} = ${q}${d}{_mouseButtonName}${q} &&
-                            ${q}${d}{${ov}previousMouseX}${q} = ${q}${d}{_mouseX}${q} &&
-                            ${q}${d}{${ov}previousMouseY}${q} = ${q}${d}{_mouseY}${q} ]] && \
-                          aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}Click${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+                        _mouseButtonName="${gl_previousMouseButtonName}"
+                        [[  "${gl_previousMouseButtonName}" = "${_mouseButtonName}" &&
+                            "${gl_previousMouseX}" = "${_mouseX}" &&
+                            "${gl_previousMouseY}" = "${_mouseY}" ]] && \
+                          aunshift _mouseEvents "mouse${_mouseButtonName}Click${_shift}${_alt}${_ctrl}"
                         ;;
                     esac
                     ;;
               esac
-              aunshift _mouseEvents ${q}mouse${d}{_mouseButtonName}${d}{_mouseButtonState}${d}{_shift}${d}{_alt}${d}{_ctrl}${q}
+              aunshift _mouseEvents "mouse${_mouseButtonName}${_mouseButtonState}${_shift}${_alt}${_ctrl}"
 #[cf]
 #[of]:              process mouse event queue list
               while ashift _mouseEvent _mouseEvents ; do
-                [[ ${q}${d}{_mouseEvent}${q} == ${q}mouseLeftUp${q} ]] && { _return=0;break 2; }
-                [[ ${q}${d}{_mouseEvent}${q} == ${q}mouseRightUp${q} ]] && { _return=1;break 2; }
+                [[ "${_mouseEvent}" == "mouseLeftUp" ]] && { _return=0;break 2; }
+                [[ "${_mouseEvent}" == "mouseRightUp" ]] && { _return=1;break 2; }
               done
 #[cf]
               ;;
