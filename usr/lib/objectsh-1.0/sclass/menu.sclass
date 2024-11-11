@@ -395,8 +395,8 @@ function menu.open {
               done
               [[ ${q}${d}{${omv}mouseButtonId}${q} == ${q}35${q} ]]
               (( (${omv}mouseButtonId & 3 )!=3  )) && ${omv}mouseButtonState=${q}Down${q} || ${omv}mouseButtonState=${q}Up${q}
-              ((${omv}mouseX--))
-              ((${omv}mouseY--))
+#[c]              ((${omv}mouseX--))
+#[c]              ((${omv}mouseY--))
 #[cf]
 #[of]:              decode mouse input into event tags
 
