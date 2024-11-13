@@ -275,6 +275,108 @@ function askyn {
 }
 #[cf]
 #[c]
+#[of]:function selectFromList {
+function selectFromList {
+  typeset i lc_wordList lc_subWordList lc_wordListIndex lc_index lc_input
+  while read -r i ; do
+    lc_wordlist[${#lc_wordlist[@]}]="${i}"
+  done < <(eval echo \"\${$2}\" | sort)
+
+  lc_wordListIndex=$(for i in "${lc_wordlist[@]}"; do echo "${i:0:1}";done | sort -u)
+  lc_input=""
+  lc_index=0
+
+  while {
+      lc_subWordList=()
+      clear
+      echo "search: \"${lc_input}\""
+      if [[ -z "${lc_input}" ]] ; then
+        echo "${lc_wordListIndex}"
+      else
+        for ((i=0;i<${#lc_wordlist[@]};i++)) ; do
+          if [[ -z "${lc_wordlist[${i}]##${lc_input}*}" ]] ; then
+            lc_subWordList[${#lc_subWordList[@]}]="${lc_wordlist[${i}]}"
+          fi
+        done
+        for ((i=0;i<${#lc_subWordList[@]};i++)) ; do
+          (( lc_index==i )) && echo -en ${q}\\033[7m${q}
+          echo "${lc_subWordList[${i}]}"
+          (( lc_index==i )) && echo -en ${q}\\033[0m${q}
+        done
+      fi
+      read -s -N 1 -r _key
+    } ; do
+      case "${_key}" in
+#[of]:        escaped keys
+      $'\e')
+#[c]        if ${gl_editingField:-false} ; then
+#[c]          gl_editingField=false
+#[c]          gl_lineRecalc=true
+#[c]          fn_refreshScreen
+#[c]        fi
+        read -s -N 2 -r -t .1 _key || {
+#[of]:          esc
+#[c]        esc itself is just a single char
+#[c]        if read timeout is reached the key must be esc
+        return 1
+#[cf]
+        }
+#[of]:        handle shift prefix
+        [[ "${_key}" == '[1' ]] && read -s -N 3 -r -t .1 _key
+#[cf]
+        case "${_key}" in
+#[of]:          up)
+            '[A')
+              ((lc_index>0)) && ((lc_index--))
+              ;;
+#[cf]
+#[of]:          down)
+            '[B')
+              ((lc_index<${#lc_subWordList[@]}-1)) && ((lc_index++))
+              ;;
+#[cf]
+        esac
+        ;;
+#[cf]
+#[of]:        enter
+      '
+')
+        #if lc_input matches a single entry use it
+        #else ignore enter
+        (( ${#lc_subWordList[@]}>0 )) && {
+          if [[ "$1" = "-" ]] ; then
+            echo "${lc_subWordList[${i}]}"
+          else
+            eval "$1=\"\${lc_subWordList[${lc_index}]}\""
+          fi
+          return 0
+        }
+        ;;
+#[cf]
+#[of]:        *)
+      *)
+#[of]:        backspace
+        [[ -n "${_key##*[^[:cntrl:]]*}" ]] && \
+          [[ $(printf %d $(printf %s "${_key}" | od -An -t dC)) = 127 ]] && {
+            lc_input="${lc_input::-1}"
+            lc_index=0
+            continue
+          }
+#[cf]
+#[of]:        all other keys
+        (( $(echo "${gl_wordList}" | grep -c "^${lc_input}${_key}") > 0 )) && \
+        (( $(echo "${gl_wordList}" | grep -c "^${lc_input}") > 1 )) && {
+          lc_index=0
+          lc_input="${lc_input}${_key}"
+        }
+#[cf]
+        ;;
+#[cf]
+      esac
+  done
+}
+#[cf]
+#[c]
 #[of]:function mouseEnable {
 function mouseEnable {
   stty -echo
@@ -400,6 +502,11 @@ aset gl_hotkeys {a..p} {r..z} {A..Z}
 
 #[cf]
 #[of]:main
+
+#[c]gl_wordList=$(cat wordlist.txt | sort)
+#[c]selectFromList gl_match gl_wordList && echo "match ${gl_match}" || echo escaped
+#[c]exit
+
 gl_menuindex=0
 new menu main
 main.settitle main
