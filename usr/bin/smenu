@@ -1,5 +1,12 @@
 #!/bin/bash
 #[of]:functions
+#[of]:function clear {
+function clear {
+  if ${gl_pause:-true} ; then
+    command clear
+  fi
+}
+#[cf]
 #[of]:function pause {
 function pause {
   typeset _key
@@ -498,7 +505,6 @@ include menu
 #include /usr/lib/objectsh-1.0/sclass/menu
 #[cf]
 #[of]:setup vars
-aset gl_hotkeys {a..p} {r..z} {A..Z}
 
 #[cf]
 #[of]:main
@@ -507,41 +513,85 @@ aset gl_hotkeys {a..p} {r..z} {A..Z}
 #[c]selectFromList gl_match gl_wordList && echo "match ${gl_match}" || echo escaped
 #[c]exit
 
-gl_menuindex=0
-new menu main
-main.settitle main
-main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'clear;stty size;pause 30'
-main.additem spacer
-main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
-main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
-main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
-main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg" 'echo yes3'
-main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
-main.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub1" 'sub1.open'
+gl_currentMenu=main
+new menu ${gl_currentMenu}
+${gl_currentMenu}.setAutoGenHotkeys true
+${gl_currentMenu}.settitle main
+gl_itemid=""
+#[of]:main.additem command "call to item" '
+gl_count=0
+${gl_currentMenu}.additem command "" "call to item" '
+#[c]  typeset lc_pause
+#[c]  lc_pause="${gl_pause}"
 
-gl_menuindex=0
-new menu sub1
-sub1.settitle sub1
-sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'echo 1'
-sub1.additem spacer
-sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
-sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
-sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
-sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg cccc" 'echo yes3'
-sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
-sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub2" 'sub2.open'
+  clear
+  [[ -z "${gl_itemid}" ]] && '${gl_currentMenu}'.getItemId gl_itemid "called by name"
+  '${gl_currentMenu}'.updateItemNameById ${gl_itemid} "new name $((gl_count++))"
 
-gl_menuindex=0
-new menu sub2
-sub2.settitle sub2
-sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'echo 1'
-sub2.additem spacer
-sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
-sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
-sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
-sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg" 'echo yes3'
-sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
-sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub1" 'sub1.open'
+  echo "pre call"
+#[c]  gl_pause=false
+  main.run_item_by_id ${gl_itemid}
+#[c]  gl_pause=${lc_pause}
+  echo "post call"
+  pause 30
+' "fn_freeToUseCheck"
+gl_bool=0
+function fn_freeToUseCheck {
+  local -n _active="$1"
+  ((gl_bool == 0)) && {
+    gl_bool=1
+    _active=true
+  } || {
+    gl_bool=0
+    _active=false
+  }
+}
+#[cf]
+#[of]:main.additem command "called by name" '
+${gl_currentMenu}.additem command "called by name" '
+  echo "start call"
+  clear
+  stty size
+  pause 30
+  echo "end  call"
+'
+#[cf]
+
+#[c]gl_currentMenu=main
+#[c]new menu ${gl_currentMenu}
+#[c]${gl_currentMenu}.settitle main
+#[c]${gl_currentMenu}.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'clear;stty size;pause 30'
+#[c]${gl_currentMenu}.additem spacer
+#[c]${gl_currentMenu}.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
+#[c]${gl_currentMenu}.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
+#[c]${gl_currentMenu}.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
+#[c]${gl_currentMenu}.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg" 'echo yes3'
+#[c]${gl_currentMenu}.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
+#[c]${gl_currentMenu}.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub1" 'sub1.open'
+#[c]
+#[c]gl_currentMenu=main
+#[c]new menu sub1
+#[c]sub1.settitle sub1
+#[c]sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'echo 1'
+#[c]sub1.additem spacer
+#[c]sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
+#[c]sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
+#[c]sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
+#[c]sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg cccc" 'echo yes3'
+#[c]sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
+#[c]sub1.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub2" 'sub2.open'
+#[c]
+#[c]gl_currentMenu=main
+#[c]new menu sub2
+#[c]sub2.settitle sub2
+#[c]sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do this" 'echo 1'
+#[c]sub2.additem spacer
+#[c]sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "do that" 'echo 2'
+#[c]sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "other option" 'clear;ls -l ~;pause 30'
+#[c]sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes2'
+#[c]sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "a long line for the menu tttt gggg" 'echo yes3'
+#[c]sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "another" 'echo yes4'
+#[c]sub2.additem command "${gl_hotkeys[$((gl_menuindex++))]}" "sub1" 'sub1.open'
 
 main.open
 exit

@@ -81,8 +81,24 @@ function ${c}.mouseDisable {
   echo -en '\e[?1000;1001;1002;1003;1006;1015l'
 }
 #[cf]
+#[of]:    function ${c}.cursorEnable {
+function ${c}.cursorEnable {
+  echo -en '\e[?25h'
+}
+#[cf]
+#[of]:    function ${c}.cursorDisable {
+function ${c}.cursorDisable {
+  echo -en '\e[?25l'
+}
+#[cf]
 #[of]:    class data
-newvar ${cv}height ${cv}width
+newvar ${cv}height ${cv}width ${cv}hotkeys
+newvar ${cv}strikeEnable ${cv}strikeDisable
+
+${cv}strikeEnable='\e[9m'
+${cv}strikeDisable='\e[0m'
+
+aset ${cv}hotkeys {a..p} {r..z} {A..Z}
 #[cf]
     ${c}.calcscreensize
   "
@@ -147,22 +163,42 @@ function menu.additem {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset _type _hotkey _name _prog _id
+    typeset _type _hotkey _name _prog _id ${omv}itemEnabledUpdater
     _type=${q}${d}1${q}
-    _hotkey=${q}${d}2${q}
-    _name=${q}${d}3${q}
-    _prog=${q}${d}4${q}
+    if ((${d}# == 1)) ; then
+      :
+    elif ((${d}# == 3)) ; then
+      _name=${q}${d}2${q}
+      _prog=${q}${d}3${q}
+    elif ((${d}# == 4)) ; then
+      _hotkey=${q}${d}2${q}
+      _name=${q}${d}3${q}
+      _prog=${q}${d}4${q}
+    elif ((${d}# == 5)) ; then
+      _hotkey=${q}${d}2${q}
+      _name=${q}${d}3${q}
+      _prog=${q}${d}4${q}
+      ${omv}itemEnabledUpdater=${q}${d}5${q}
+    else
+      die ${q}must have 3,4, or 5 arguments: ${d}0 ${d}@${q}
+    fi
 
 #[c]    ${ov}itemIdPool.getid _id
 
     new menuitem ${ov}item${d}{${ov}totalitems}
-    ${ov}item${d}{${ov}totalitems}.settype ${q}${d}{_type}${q}
-    ${ov}item${d}{${ov}totalitems}.sethotkey ${q}${d}{_hotkey}${q}
-    [[ -n ${q}${d}{_hotkey}${q} ]] && \
-      ${ov}hotkeys.setkey ${q}${d}{_hotkey}${q} ${d}{${ov}totalitems}
-    ${ov}item${d}{${ov}totalitems}.setname ${q}${d}{_name}${q}
-    ${ov}item${d}{${ov}totalitems}.setprog ${q}${d}{_prog}${q}
-    
+    ${ov}item${d}{${ov}totalitems}.setType ${q}${d}{_type}${q}
+    if ((${d}# > 1)) ; then
+      ## to avoid hotkey conflicts, if autoGenHotkeys is enabled manual hotkey entries will be ignored.
+      ${d}{${ov}autoGenHotkeys:-false} && _hotkey=${q}${d}{${cv}hotkeys[${d}((${ov}hotkeyIndex++))]}${q}
+      [[ -n ${q}${d}{_hotkey}${q} ]] && {
+        ${ov}item${d}{${ov}totalitems}.setHotkey ${q}${d}{_hotkey}${q}
+        ${ov}hotkeys.setkey ${q}${d}{_hotkey}${q} ${d}{${ov}totalitems}
+      }
+      ${ov}item${d}{${ov}totalitems}.setName ${q}${d}{_name}${q}
+      ${ov}item${d}{${ov}totalitems}.setProg ${q}${d}{_prog}${q}
+      ${ov}item${d}{${ov}totalitems}.setEnabledUpdater ${q}${d}{${omv}itemEnabledUpdater}${q}
+    fi
+
     ((++${ov}totalitems))
   
     return 0
@@ -173,13 +209,105 @@ function menu.additem {
 #[c]  function menu.delitem {
 #[c]  }
 #[cf]
+#[of]:  function menu.getItemId {
+function menu.getItemId {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    ((${d}# != 2)) && die ${q}must have 2 args: -|var name${q}
+    typeset _name
+    _name=${q}${d}2${q}
+
+    typeset i
+    typeset ${omv}name
+
+    for ((i=0;i<${ov}totalitems;i++)) ; do
+      ${ov}item${d}{i}.getName ${omv}name
+      if [[ ${q}${d}{${omv}name}${q} = ${q}${d}{_name}${q} ]] ; then
+        if [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+          echo ${q}${d}{i}${q}
+        else
+          eval ${d}1=\\${q}\\${d}{i}\\${q}
+        fi
+        return 0
+      fi
+    done
+    die ${q}no menu item by that name exist: ${d}0 ${d}@${q}
+  "
+}
+#[cf]
 #[of]:  function menu.updateItemName {
-#[c]  function menu.updateItemName {
-#[c]  }
+function menu.updateItemName {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset _name _newName
+    _name=${q}${d}1${q}
+    _newName=${q}${d}2${q}
+
+    typeset i
+    typeset ${omv}name
+
+    for ((i=0;i<${ov}totalitems;i++)) ; do
+      ${ov}item${d}{i}.getName ${omv}name
+      if [[ ${q}${d}{${omv}name}${q} == ${q}${d}{_name}${q} ]] ; then
+        ${ov}item${d}{i}.setName ${q}${d}{_newName}${q}
+        break
+      fi
+    done
+
+    return 0
+  "
+}
+#[cf]
+#[of]:  function menu.updateItemNameById {
+function menu.updateItemNameById {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset _id _newName
+    _id=${q}${d}1${q}
+    _newName=${q}${d}2${q}
+
+    ${ov}item${d}{_id}.setName ${q}${d}{_newName}${q}
+  "
+}
 #[cf]
 #[of]:  function menu.updateItemProg {
-#[c]  function menu.updateItemProg {
-#[c]  }
+function menu.updateItemProg {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset _name _prog
+    _name=${q}${d}1${q}
+    _prog=${q}${d}2${q}
+
+    typeset i
+    typeset ${omv}name
+
+    for ((i=0;i<${ov}totalitems;i++)) ; do
+      ${ov}item${d}{i}.getName ${omv}name
+      if [[ ${q}${d}{${omv}name}${q} == ${q}${d}{_name}${q} ]] ; then
+        ${ov}item${d}{i}.setProg ${q}${d}{_prog}${q}
+        break
+      fi
+    done
+
+    return 0
+  "
+}
 #[cf]
 #[of]:  function menu.incselecteditem {
 function menu.incselecteditem {
@@ -265,16 +393,17 @@ function menu.open {
 #[c]    ${ov}width=12
 #[c]    [[ ${d}{#${ov}title} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${ov}title}
 #[c]    for ((i=0;i<${d}{${ov}totalitems};i++)) ; do
-#[c]      ${ov}item${d}{i}.getname ${omv}name
+#[c]      ${ov}item${d}{i}.getName ${omv}name
 #[c]      [[ ${d}{#${omv}name} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${omv}name}
 #[c]    done
-#[c]    ((${ov}width+=9))
+#[c]    ((${ov}width+=${ov}widthPadding+2))
 #[c]    ${ov}left=${d}((${cv}width/2-${ov}width/2))
 #[c]    ${ov}top=${d}((${cv}height/2-(${ov}totalitems+4)/2))
 #[cf]
 #[c]    ${c}.calcscreensize
 
     ${c}.mouseEnable
+    ${c}.cursorDisable
     ${c}.calcscreensize
     ${o}.refresh
 #[of]:    key process loop
@@ -327,7 +456,9 @@ function menu.open {
 #[c]                      echo yes ${q}${d}${ov}selecteditem${q}
                       {
                         ${c}.mouseDisable
+                        ${c}.cursorEnable
                         ${ov}item${d}((${ov}selecteditem)).runprog
+                        ${c}.cursorDisable
                         ${c}.mouseEnable
                         ${ov}enter=1
                         ${c}.calcscreensize
@@ -338,7 +469,9 @@ function menu.open {
                   echo ${q}no ${d}${ov}selecteditem -- ${d}{${omv}mouseEvent[@]}${q}
 #[c]                  {
 #[c]                    ${c}.mouseDisable
+#[c]                    ${c}.cursorEnable
 #[c]                    ${ov}item${d}((${ov}selecteditem)).runprog
+#[c]                    ${c}.cursorDisable
 #[c]                    ${c}.mouseEnable
 #[c]                    ${ov}enter=1
 #[c]                    ${o}.refresh
@@ -456,7 +589,9 @@ function menu.open {
 #[c]                      echo yes ${q}${d}${ov}selecteditem${q}
                       {
                         ${c}.mouseDisable
+                        ${c}.cursorEnable
                         ${ov}item${d}((${ov}selecteditem)).runprog
+                        ${c}.cursorDisable
                         ${c}.mouseEnable
                         ${ov}enter=1
                         ${c}.calcscreensize
@@ -467,7 +602,9 @@ function menu.open {
                   echo ${q}no ${d}${ov}selecteditem -- ${d}{${omv}mouseEvent[@]}${q}
 #[c]                  {
 #[c]                    ${c}.mouseDisable
+#[c]                    ${c}.cursorEnable
 #[c]                    ${ov}item${d}((${ov}selecteditem)).runprog
+#[c]                    ${c}.cursorDisable
 #[c]                    ${c}.mouseEnable
 #[c]                    ${ov}enter=1
 #[c]                    ${o}.refresh
@@ -562,14 +699,16 @@ function menu.open {
 ')
           ((${ov}enter)) && {
             ${c}.mouseDisable
+            ${c}.cursorEnable
             ${ov}item${d}((${ov}selecteditem)).runprog
-#[c]            ${ov}item${d}((${ov}selecteditem)).getprog ${omv}prog
+#[c]            ${ov}item${d}((${ov}selecteditem)).getProg ${omv}prog
 #[c]            [[ -n ${q}${d}{${omv}prog}${q} ]] && eval ${q}${d}{${omv}prog}${q}
 #[c]            if [[ -n ${q}${d}{${omv}prog}${q} ]] ; then
 #[c]              trap ${q}echo TRAPed signal${q} INT
 #[c]              eval ${q}${d}{${omv}prog}${q}
 #[c]              trap - INT
 #[c]            fi
+            ${c}.cursorDisable
             ${c}.mouseEnable
             ${ov}enter=1
             ${c}.calcscreensize
@@ -582,7 +721,9 @@ function menu.open {
           if ${ov}hotkeys.getkey _item ${q}${d}{${omv}key}${q} ; then
             ${ov}selecteditem=${d}{_item}
             ${c}.mouseDisable
+            ${c}.cursorEnable
             ${ov}item${d}((${ov}selecteditem)).runprog
+            ${c}.cursorDisable
             ${c}.mouseEnable
             ${ov}enter=1
             ${c}.calcscreensize
@@ -595,6 +736,7 @@ function menu.open {
       esac
     done
 #[cf]
+    ${c}.cursorEnable
     ${c}.mouseDisable
 
     echo
@@ -622,10 +764,10 @@ function menu.calcTopLeft {
     ${ov}width=12
     [[ ${d}{#${ov}title} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${ov}title}
     for ((i=0;i<${d}{${ov}totalitems};i++)) ; do
-      ${ov}item${d}{i}.getname ${omv}name
+      ${ov}item${d}{i}.getName ${omv}name
       [[ ${d}{#${omv}name} -gt ${d}{${ov}width} ]] && ${ov}width=${d}{#${omv}name}
     done
-    ((${ov}width+=9))
+    ((${ov}width+=${ov}widthPadding+2))
     ${ov}left=${d}((${cv}width/2-${ov}width/2+1))
     ${ov}top=${d}((${cv}height/2-(${ov}totalitems+4)/2))
 #[c]
@@ -661,6 +803,13 @@ function menu.refresh {
   eval "
     typeset i j _vpositon _exitmsg
     typeset ${omv}type ${omv}hotkey ${omv}name ${omv}prog
+    typeset ${omv}isEnabled ${omv}itemEnabledUpdater
+
+    if ${ov}hotkeys.getsize ! ; then
+      ${ov}widthPadding=7
+    else
+      ${ov}widthPadding=4
+    fi
 
     ${o}.calcTopLeft
 #[c]    ${ov}itemPositions.getsize ! && ${ov}firstrun=${q}false${q} || ${ov}firstrun=${q}true${q}
@@ -686,7 +835,7 @@ function menu.refresh {
       ${c}.setcursorxy ${d}((${ov}left)) ${d}((_vpositon+i))
 #[c]      echo -n ${q}${d}{i}${d}{${ov}totalitems}${q}
 
-      ${ov}item${d}{i}.gettype ${omv}type
+      ${ov}item${d}{i}.getType ${omv}type
 #[c]      echo -en ${q}${d}{${omv}type}${q}
 
       echo -n '*'
@@ -701,13 +850,25 @@ function menu.refresh {
 #[cf]
 #[of]:        action|*)
         action|*)
-          ${ov}item${d}{i}.gethotkey ${omv}hotkey
-          ${ov}item${d}{i}.getname ${omv}name
-          while ((${d}{#${omv}name}<${ov}width-7)) ; do
+          ${ov}item${d}{i}.getHotkey ${omv}hotkey
+          ${ov}item${d}{i}.getName ${omv}name
+          while ((${d}{#${omv}name}<${ov}width-${ov}widthPadding)) ; do
             ${omv}name=${q}${d}{${omv}name} ${q}
           done
           ${d}{${ov}firstrun} && ${ov}itemPositions.setkey ${q}${d}((_vpositon+i))${q} ${q}${d}{i}${q}
-          echo -n ${q}  ${d}{${omv}hotkey:- }. ${d}{${omv}name}${q}
+
+          ${omv}isEnabled=true
+          ${ov}item${d}{i}.getEnabledUpdater ${omv}itemEnabledUpdater
+          if [[ -n ${q}${d}{${omv}itemEnabledUpdater}${q} ]] && isfnset ${q}${d}{${omv}itemEnabledUpdater}${q} ; then
+            ${d}{${omv}itemEnabledUpdater} ${q}${omv}isEnabled${q}
+          fi
+          ${ov}item${d}{i}.setEnabled ${q}${d}{${omv}isEnabled}${q}
+
+          if [[ ${q}${d}{${omv}isEnabled}${q} == ${q}true${q} ]] ; then
+            echo -en ${q}  ${d}{${omv}hotkey}${d}{${omv}hotkey:+. }${d}{${omv}name}${q}
+          else
+            echo -en ${q}${d}{${cv}strikeEnable}  ${d}{${omv}hotkey}${d}{${omv}hotkey:+. }${d}{${omv}name}${d}{${cv}strikeDisable}${q}
+          fi
           ;;
 #[cf]
       esac
@@ -756,19 +917,45 @@ function menu.run_item_by_name {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset _name
-    _name=${q}${d}1${q}
+    typeset ${omv}requestedName _inItemCall
+    ${omv}requestedName=${q}${d}1${q}
+    _inItemCall=${q}${d}{gl_pause}${q}
 
-    typeset i j  _exitmsg
+    typeset i
     typeset ${omv}name
 
     for ((i=0;i<${ov}totalitems;i++)) ; do
-      ${ov}item${d}{i}.getname ${omv}name
-      if [[ ${q}${d}{${omv}name}${q} == ${q}${d}{_name}${q} ]] ; then
+      ${ov}item${d}{i}.getName ${omv}name
+      if [[ ${q}${d}{${omv}name}${q} == ${q}${d}{${omv}requestedName}${q} ]] ; then
+        gl_pause=false
         ${ov}item${d}{i}.runprog
+        gl_pause=${q}${d}{_inItemCall}${q}
         break
       fi
     done
+
+    return 0
+  "
+}
+#[cf]
+#[of]:  function menu.run_item_by_id {
+function menu.run_item_by_id {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset ${omv}requestedId _inItemCall
+    ${omv}requestedId=${q}${d}1${q}
+    _inItemCall=${q}${d}{gl_pause}${q}
+
+    typeset i
+    typeset ${omv}name
+
+    gl_pause=false
+    ${ov}item${d}{${omv}requestedId}.runprog
+    gl_pause=${q}${d}{_inItemCall}${q}
 
     return 0
   "
@@ -782,14 +969,11 @@ function menu.list_runnable_items_by_name {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    typeset _name
-    _name=${q}${d}1${q}
-
-    typeset i j  _exitmsg
+    typeset i
     typeset ${omv}name
 
     for ((i=0;i<${ov}totalitems;i++)) ; do
-      ${ov}item${d}{i}.getname ${omv}name
+      ${ov}item${d}{i}.getName ${omv}name
       ${ov}item${d}{i}.hasprog && echo ${q}${d}${omv}name${q}
     done
 
@@ -812,7 +996,7 @@ function menu.constructor {
   eval "
 #[of]:    object data
 newvar ${ov}submenu ${ov}title ${ov}totalitems ${ov}selecteditem ${ov}enter
-newvar ${ov}top ${ov}bottom ${ov}left ${ov}width
+newvar ${ov}top ${ov}bottom ${ov}left ${ov}width ${ov}widthPadding
 newvar ${ov}firstrun
 
 ${ov}firstrun=${q}true${q}
@@ -821,7 +1005,12 @@ ${ov}title=${q}empty title${q}
 #[c]new referenceid ${ov}itemIdPool
 ${ov}totalitems=0
 
+newPublicVar autoGenHotkeys
+newvar ${ov}hotkeyIndex
+${ov}hotkeyIndex=0
+autoGenHotkey=false
 new hash ${ov}hotkeys
+
 new hash ${ov}itemPositions
 #[cf]
   "
@@ -842,9 +1031,10 @@ function menuitem.runprog {
 #[cf]
   eval "
 #[c]    [[ -n ${q}${d}{${ov}prog}${q} ]] && eval ${q}${d}{${ov}prog}${q}
-    if [[ -n ${q}${d}{${ov}prog}${q} ]] ; then
+    if [[ ${q}${d}{${ov}enabled}${q} = ${q}true${q} && -n ${q}${d}{${ov}prog}${q} ]] ; then
       trap ${q}echo TRAPed signal${q} INT
       eval ${q}${d}{${ov}prog}${q}
+      gl_return=${d}?
       trap - INT
     fi
   "
@@ -862,18 +1052,6 @@ function menuitem.constructor {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   #echo constructing object ${o} of class ${c}
-  typeset i
-  for i in type hotkey name prog ; do
-    eval "
-      newvar ${ov}${i}
-      function ${o}.set${i} {
-        ${ov}${i}=${q}${d}1${q}
-      }
-      function ${o}.get${i} {
-        eval ${d}1=\\${q}\\${d}{${ov}${i}}\\${q}
-      }
-    "
-  done
   eval "
 #[of]:    function ${o}.isselectable {
 function ${o}.isselectable {
@@ -886,6 +1064,11 @@ function ${o}.hasprog {
 }
 #[cf]
 #[of]:    object data
+newvar ${ov}enabled
+newPublicVar type hotkey name prog enabled enabledUpdater
+
+${ov}enabled=true
+
 #[cf]
   "
 }
