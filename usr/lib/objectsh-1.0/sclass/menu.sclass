@@ -791,9 +791,11 @@ function menu.refresh {
     typeset i j _vpositon _exitmsg
     typeset ${omv}type ${omv}hotkey ${omv}name ${omv}prog
     typeset ${omv}isEnabled ${omv}itemEnabledUpdater
+    typeset ${omv}hotkeyPadding
 
     if ${ov}hotkeys.getsize ! ; then
       ${ov}widthPadding=7
+      ${omv}hotkeyPadding=${q}   ${q}
     else
       ${ov}widthPadding=4
     fi
@@ -852,9 +854,9 @@ function menu.refresh {
           ${ov}item${d}{i}.setEnabled ${q}${d}{${omv}isEnabled}${q}
 
           if [[ ${q}${d}{${omv}isEnabled}${q} == ${q}true${q} ]] ; then
-            echo -en ${q}  ${d}{${omv}hotkey}${d}{${omv}hotkey:+. }${d}{${omv}name}${q}
+            echo -en ${q}  ${d}{${omv}hotkey:-${d}{${omv}hotkeyPadding}}${d}{${omv}hotkey:+. }${d}{${omv}name}${q}
           else
-            echo -en ${q}${d}{${cv}strikeEnable}  ${d}{${omv}hotkey}${d}{${omv}hotkey:+. }${d}{${omv}name}${d}{${cv}strikeDisable}${q}
+            echo -en ${q}${d}{${cv}strikeEnable}  ${d}{${omv}hotkey:-${d}{${omv}hotkeyPadding}}${d}{${omv}hotkey:+. }${d}{${omv}name}${d}{${cv}strikeDisable}${q}
           fi
           ;;
 #[cf]
