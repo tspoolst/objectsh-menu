@@ -168,6 +168,29 @@ function pauseHandleKey {
 }
 #[cf]
 #[cf]
+#[of]:function pauseEscToContinue {
+function pauseEscToContinue {
+  typeset _key
+
+  echo "press ESC to continue"
+  while true ; do
+    read -s -n 1 -r _key
+    case "${_key}" in
+#[of]:      escaped keys
+        $'\E')
+          read -s -n 2 -r -t .1 _key || {
+#[of]:            esc
+#[c]            esc itself is just a single char
+#[c]            if read timeout is reached the key must be esc
+            break
+#[cf]
+          }
+          ;;
+#[cf]
+    esac
+  done
+}
+#[cf]
 #[of]:function askyn {
 function askyn {
   typeset _key _return _mouse
@@ -286,10 +309,10 @@ function askyn {
 function selectFromList {
   typeset i lc_wordList lc_subWordList lc_wordListIndex lc_index lc_input
   while read -r i ; do
-    lc_wordlist[${#lc_wordlist[@]}]="${i}"
+    lc_wordList[${#lc_wordList[@]}]="${i}"
   done < <(eval echo \"\${$2}\" | sort)
 
-  lc_wordListIndex=$(for i in "${lc_wordlist[@]}"; do echo "${i:0:1}";done | sort -u)
+  lc_wordListIndex=$(for i in "${lc_wordList[@]}"; do echo "${i:0:1}";done | sort -u)
   lc_input=""
   lc_index=0
 
@@ -300,15 +323,15 @@ function selectFromList {
       if [[ -z "${lc_input}" ]] ; then
         echo "${lc_wordListIndex}"
       else
-        for ((i=0;i<${#lc_wordlist[@]};i++)) ; do
-          if [[ -z "${lc_wordlist[${i}]##${lc_input}*}" ]] ; then
-            lc_subWordList[${#lc_subWordList[@]}]="${lc_wordlist[${i}]}"
+        for ((i=0;i<${#lc_wordList[@]};i++)) ; do
+          if [[ -z "${lc_wordList[${i}]##${lc_input}*}" ]] ; then
+            lc_subWordList[${#lc_subWordList[@]}]="${lc_wordList[${i}]}"
           fi
         done
         for ((i=0;i<${#lc_subWordList[@]};i++)) ; do
-          (( lc_index==i )) && echo -en ${q}\\033[7m${q}
+          (( lc_index==i )) && echo -en "\\033[7m"
           echo "${lc_subWordList[${i}]}"
-          (( lc_index==i )) && echo -en ${q}\\033[0m${q}
+          (( lc_index==i )) && echo -en "\\033[0m"
         done
       fi
       read -s -N 1 -r _key

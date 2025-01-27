@@ -142,19 +142,6 @@ function menu.drawhborder {
   "
 }
 #[cf]
-#[of]:  function menu.settitle {
-function menu.settitle {
-#[c]object
-#[of]:  set common environment
-#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
-  . ${gl_classpath}/classcommonenv.sh
-#[cf]
-  eval "
-    ${ov}title=${q}${d}1${q}
-    return 0
-  "
-}
-#[cf]
 #[of]:  function menu.additem {
 function menu.additem {
 #[c]object
@@ -995,7 +982,8 @@ function menu.constructor {
   #echo constructing object ${o} of class ${c}
   eval "
 #[of]:    object data
-newvar ${ov}submenu ${ov}title ${ov}totalitems ${ov}selecteditem ${ov}enter
+newPublicVar title
+newvar ${ov}submenu ${ov}totalitems ${ov}selecteditem ${ov}enter
 newvar ${ov}top ${ov}bottom ${ov}left ${ov}width ${ov}widthPadding
 newvar ${ov}firstrun
 
